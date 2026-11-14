@@ -1,236 +1,209 @@
 # MUSD Rescue
 
-**See liquidation risk early. Understand your options. Act with confidence.**
+**See how far BTC can fall before your MUSD trove is liquidated, then make sure a rescue runs even when you are not watching.**
 
-**Live app: https://musd-rescue.vercel.app** (Mezo testnet)
+**Live app: https://musd-rescue.vercel.app** (Mezo testnet) · Contract: [`RescueGuard` 0xf100dd7a…e711](https://explorer.test.mezo.org/address/0xf100dd7ae2d9dc651e9c9545790aa9c7b5a0e711#code) (verified)
 
-MUSD Rescue is a liquidation-prevention and collateral-health instrument for borrowers of **MUSD, Mezo's Bitcoin-backed stablecoin**. It reads real MUSD troves straight from the protocol contracts on Mezo testnet, measures how close each one is to the 110% liquidation line, simulates rescues against the contract's own rules, and prepares the real `repayMUSD` / `addColl` transaction only after an explicit confirmation screen, then verifies the result on-chain.
+MUSD Rescue is a liquidation-prevention tool for borrowers of **MUSD, Mezo's Bitcoin-backed stablecoin**. It reads every MUSD trove straight from the protocol contracts, shows the price that would liquidate it, prepares the exact repayment or collateral top-up that the contract will accept, and, new in Wave 2, stores that rescue **on-chain** in RescueGuard. RescueGuard runs it the moment the collateral ratio falls below the borrower's trigger, and anyone can trigger it.
 
 > Risk information only. MUSD Rescue cannot guarantee that liquidation will be prevented.
 
----
+![Landing page](docs/screenshots/landing-desktop.png)
 
-## The problem
+## Why it matters
 
-An MUSD trove is liquidated by anyone the moment its collateral ratio (ICR) drops below 110%. Borrowers have to answer, under time pressure:
+An MUSD trove is liquidated the moment its collateral ratio drops below 110%, and the liquidator takes the whole trove. Borrowers have to answer, under time pressure: how far can BTC fall? How much MUSD do I repay, or BTC do I add? Will the contract even accept it (minimum net debt, Recovery Mode)? And what if this happens at 3 a.m.?
 
-- How far can BTC fall before I am liquidated?
-- How much MUSD do I need to repay, or BTC to add, to get back to safety?
-- Will the contract even accept my rescue? (A repayment can be rejected because of the 1,800 MUSD minimum net debt, or because it does not lift ICR back over 110% in one go.)
-- Did my transaction actually work?
+Wave 1 answered the first three. **Wave 2 answers the last one.** A borrower signs a rescue once. RescueGuard holds the reserve and checks the trigger on-chain, so the rescue lands without the borrower online, and only when it is actually needed.
 
-## The solution
+## Try it in two minutes
 
-| | What MUSD Rescue does |
+1. Open **https://musd-rescue.vercel.app**. Drag the BTC price under the gauge: the live demo trove `0x10ac…B628` slides toward the hatched 110% liquidation zone.
+2. Open **Guard** (`/guard?owner=0x10ac9924a78051BdD770978740C5084205cdB628`). That trove is protected by a real plan: add 0.003 BTC if its ratio falls below 118%. The registry below lists the rescues already run on-chain and which wallet ran them.
+3. Open **Radar** to see all ~330 open troves and how much debt becomes liquidatable for a given BTC drop.
+4. With your own wallet: get testnet BTC from the [Mezo faucet](https://faucet.test.mezo.org/), connect, and on the dashboard press **Open a trove**. Then on **Guard**, store a plan (two free signatures, one transaction). Set the trigger above your current ratio and the plan is immediately **Ready to run**. Run it yourself or from a second wallet, and watch the debt fall.
+5. No wallet? **Demo** has three example troves with the same simulator.
+
+## What's new in Wave 2
+
+| | |
 |---|---|
-| **Monitor** | Live ICR, health factor, liquidation price, room to liquidation, interest accrual, system TCR and distance to Recovery Mode, refreshed every 15 s. |
-| **Simulate** | Price scenarios (presets and a drag slider), repay / add-collateral / combined rescues, a target-health-factor solver and a side-by-side comparison of rescue options with trade-offs. Every check mirrors a `require` in `BorrowerOperations`. |
-| **Act** | Server prepares the transaction from fresh state (hints, `eth_call` simulation, explicit gas), the client independently decodes it, you confirm, your wallet signs. |
-| **Verify** | Receipt verified server-side (status, contract, sender, `TroveUpdated` event, exact MUSD burn), trove re-read at the receipt block and the block before (same oracle price), recorded once per tx hash. |
-| **Warn** | Alert rules (warning/critical zone, HF drop, price drop, unexpected debt, stale data, Recovery Mode) with frequency and quiet hours, evaluated by a daily cron, on every visit and on Check now. |
+| **RescueGuard (on-chain auto-rescue)** | A new, audited contract. The borrower deposits an MUSD reserve (EIP-2612 permit, no approve) or BTC, and stores a `RepayMUSD`/`AddColl` authorization signed for Mezo's own `BorrowerOperationsSignatures`. Anyone may call `execute()`. It only proceeds while the trove's ICR at the MUSD oracle price is below the trigger, and it reverts unless the rescue lifts the trove above 110%. Keepers can earn an owner-set tip. No owner, no admin, no upgrades, no fees. |
+| **Guard page** | Set up, change, cancel and withdraw. Plans are sized from the trigger price. Every contract and protocol rule is explained before the wallet opens. Status runs Armed, Ready to run, Needs a new signature, and so on. Anyone can press "Run rescue now". A public registry lists protected troves and rescues run on-chain. |
+| **Keeper** | A daily Vercel cron plus an "Ask the app keeper" button (when a keeper key is configured), and a standalone `npm run keeper` that anyone can run. |
+| **Get MUSD with BTC** | In-app BTC to MUSD swap through **Mezo Pools**, from the account menu, the simulator (when the wallet is short) and Guard setup. |
+| **Open a trove in the app** | Faucet BTC to an open trove without leaving the app: live preview of debt, ratio, liquidation price and risk. |
+| **Audit** | An independent review found 3 issues (1 Medium, 2 Low). Each got a failing proof-of-concept test, a fix and a regression test. See [docs/SECURITY.md](docs/SECURITY.md). |
+| **Redesign** | Blue, black and white only. Risk is shown by ink density (healthy = blue, critical = solid black), and the liquidation zone is always black hatching. No gradients or glows. Works from 360 px phones to desktop. |
 
-## Features that work today
+## How it uses Mezo
 
-- **Wallet connection** with EIP-6963 multi-wallet discovery (MetaMask, Rabby, OKX…), custom connect modal, explicit unsupported-network banner, add/switch Mezo Testnet, add MUSD to wallet.
-- **Sign-In with Ethereum** (EIP-4361): server nonce (single use, 10 min), domain/URI/chain/expiry checks, HttpOnly signed-JWT session.
-- **Risk dashboard** (`/dashboard`): your trove plus watched troves, totals, weakest position (no misleading blended health factor), healthy / needs-attention / critical counts, data source and freshness, empty state with next steps.
-- **Position detail** (`/positions/[address]`): collateral and debt breakdown (principal, 200 MUSD gas compensation, recorded + accrued interest, pending redistribution), redemption-order rank, **real on-chain history** of the oracle price and the trove's health factor (archive `eth_call` at past blocks), optional CoinGecko reference line clearly labelled external, protocol event log, inline alert rules, share link, printable report.
-- **Rescue simulator** (`/rescue/[address]`): the signature feature. Scenario + rescue panels, clearance gauge with simulated marker, minNetDebt-aware max buttons, target solver, compare table, and the live transaction flow (prepare → confirm → sign → receipt → verify → refresh) with rejected / reverted / disconnected / wrong-network / expired-quote handling and a "your position got riskier since you opened the simulator" warning.
-- **Liquidation radar** (`/radar`): all ~350 open troves read through Multicall3 at one block, histogram by collateral ratio, cumulative "debt liquidatable vs BTC drop" curve, riskiest-troves table.
-- **Alerts** (`/alerts`): rule editor, monitoring status (last successful scheduled run and last check), Check now, in-app inbox, opt-in browser notifications while the app is open.
-- **Activity** (`/activity`): verified rescue transactions (CSV export), event log with on-chain vs app-event labels, protocol log for your trove.
-- **Settings** (`/settings`): network, session, adjustable risk categories and default target HF, live data-source health, verified contract table (testnet + mainnet read-only).
-- **Demo** (`/demo`): three FICTIONAL positions (healthy, near-warning, high-risk), price slider, repay/add-collateral simulation, hatched violet styling, never touches chain or DB.
-- **Signature 3D hero**: a BTC collateral sphere suspended above a glowing liquidation plane; dragging the price lowers it toward the plane and shifts green → amber → red, driven by the owner's real trove. Lazy-loaded R3F, DPR ≤ 1.75, paused off-screen and in hidden tabs, static poster for reduced motion and phones.
-- Extras: ⌘K command palette (paste any address to watch it), system-health strip (oracle price, TCR, Recovery Mode distance, trove count, block, freshness), printable risk report, share links, methodology and legal pages, OG image, sitemap/robots, Vercel Analytics.
+- **MUSD protocol, read directly.** `TroveManager`, `BorrowerOperations`, `PriceFeed`, `SortedTroves`, `HintHelpers`, `InterestRateManager` and `StabilityPool`, through Multicall3 at a single block. Archive `eth_call` is used for history.
+- **`BorrowerOperationsSignatures` (EIP-712).** RescueGuard executes rescues through MUSD's own signature entry point. On a signed repayment the MUSD is burned from the caller (RescueGuard's reserve), and that is what makes a reserve-backed rescue possible without custody of the trove.
+- **MUSD EIP-2612 `permit`.** Reserve deposits take one transaction with no separate approve (domain "Mezo USD").
+- **Mezo Pools.** `swapExactTokensForTokens` on the router through the volatile BTC/MUSD pool. BTC is the ERC-20 precompile at `0x7b7C…0000`.
+- **Protocol rules mirrored exactly.** 110% MCR, Recovery Mode at 150% TCR (MUSD does not liquidate between 110% and 150%), 1,800 MUSD minimum net debt, 200 MUSD gas compensation, interest-first repayment, NICR-based list hints, and the 60-second oracle staleness rule.
+- **Mezo specifics handled.** Explicit gas floors (the RPC returns low estimates), `eth_getLogs` in 10k-block chunks, `evmVersion: london` with OZ 5.0.2, and the 10M block gas limit.
+
+## Features
+
+- **Rescue Guard** (`/guard`): on-chain plans, status, run now, registry, retire-and-replace flow.
+- **Dashboard** (`/dashboard`): your trove plus watched troves, weakest health factor, risk counts, open a trove.
+- **Position detail** (`/positions/[address]`): debt breakdown (principal, gas compensation, interest, pending redistribution), on-chain health history, event log, alert rules, printable report.
+- **Rescue simulator** (`/rescue/[address]`): price scenarios, repay / add collateral / both, target solver, option comparison, and the live transaction flow (server prepares from fresh state → you confirm → wallet signs → receipt verified → trove re-read).
+- **Liquidation radar** (`/radar`): every open trove at one block, a ratio histogram, and liquidatable debt against BTC drop.
+- **Alerts** (`/alerts`): warning and critical zone, health-factor drop, price drop, unexpected debt, stale data, Recovery Mode. Quiet hours, daily cron, Check now, browser notifications.
+- **Activity** (`/activity`), **Settings** (`/settings`), **Demo** (`/demo`), **Methodology** (`/methodology`), Sign-In with Ethereum, ⌘K command palette.
+
+<table>
+  <tr>
+    <td width="66%"><img src="docs/screenshots/guard-desktop.png" alt="Rescue Guard on desktop" /></td>
+    <td><img src="docs/screenshots/guard-mobile.png" alt="Rescue Guard on a phone" /></td>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/rescue-desktop.png" alt="Rescue simulator on desktop" /></td>
+    <td><img src="docs/screenshots/dashboard-mobile.png" alt="Dashboard on a phone" /></td>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/radar-desktop.png" alt="Liquidation radar on desktop" /></td>
+    <td><img src="docs/screenshots/landing-mobile.png" alt="Landing page on a phone" /></td>
+  </tr>
+</table>
 
 ## Architecture
 
 ```mermaid
 flowchart LR
   subgraph Browser
-    UI[Next.js App Router UI<br/>React 19, Tailwind 4, R3F]
-    W[wagmi + viem<br/>injected / EIP-6963 wallet]
-    RE1[Risk engine<br/>pure TS, bigint]
+    UI[Next.js 16 UI<br/>React 19, Tailwind 4]
+    W[wagmi + viem<br/>EIP-6963 wallets]
+    RE[Risk engine + guard plan logic<br/>pure TS, bigint]
   end
   subgraph Vercel
     API[Route handlers /api/*]
-    AD[MUSD adapter<br/>LendingAdapter interface]
-    RE2[Risk engine<br/>same module]
-    CRON[Daily cron 06:00 UTC]
+    K[Keeper: daily cron<br/>+ on request]
   end
-  DB[(Neon Postgres<br/>schema "rescue")]
-  RPC[Mezo testnet RPC<br/>archive node]
-  MC[Multicall3]
-  MUSD[MUSD protocol<br/>BorrowerOperations, TroveManager,<br/>PriceFeed, SortedTroves, HintHelpers]
-  BS[Blockscout logs API]
-  CG[CoinGecko<br/>reference only]
+  subgraph Mezo testnet
+    RG[RescueGuard<br/>reserves + plans]
+    BOS[BorrowerOperationsSignatures<br/>EIP-712]
+    MUSD[MUSD protocol<br/>BorrowerOperations, TroveManager,<br/>PriceFeed, SortedTroves, HintHelpers]
+    POOLS[Mezo Pools router]
+    TOKEN[MUSD token<br/>EIP-2612 permit]
+  end
+  DB[(Neon Postgres<br/>alerts, activity, snapshots)]
+  KS[npm run keeper<br/>anyone]
 
-  UI --> API
-  UI --> RE1
-  W -- signs confirmed rescue tx --> RPC
-  API --> AD --> MC --> MUSD
-  AD --> RPC
-  AD --> BS
-  API --> RE2
+  UI --> API --> MUSD
+  UI --> RE
+  W -- arm plan: permit + authorization --> RG
+  W -- repay / addColl / openTrove --> MUSD
+  W -- swap BTC to MUSD --> POOLS
+  RG -- pull reserve --> TOKEN
+  K -- execute when Ready --> RG
+  KS -- execute when Ready --> RG
+  W -- run rescue now --> RG
+  RG -- repayMUSDWithSignature / addCollWithSignature --> BOS --> MUSD
+  RG -- getCurrentICR at oracle price --> MUSD
   API --> DB
-  CRON --> API
-  API --> CG
 ```
 
-### How a rescue works, step by step
+**A guarded rescue, step by step.** (1) The UI sizes a plan from the trigger price with the same engine as the simulator. (2) The wallet signs a `RepayMUSD` authorization for BOS at the borrower's current nonce, plus an MUSD permit. (3) One transaction, `armRepayWithPermit`, deposits the reserve and stores the plan, after RescueGuard verifies the signature on-chain. (4) When BTC falls, a keeper or anyone calls `execute`. RescueGuard re-reads the ICR at the oracle price, calls BOS, checks that exactly the authorized MUSD was burned and that the trove is now above 110%, and only then pays the tip.
 
-1. `GET /api/positions/:owner`: one Multicall3 batch reads `Troves`, `getEntireDebtAndColl`, `fetchPrice`, system collateral/debt, protocol parameters, MUSD and BTC balances and the block number/timestamp, all at one block.
-2. The simulator runs the risk engine locally on those numbers for instant feedback.
-3. **Review transaction** → `POST /api/rescue/prepare`: the server re-reads the trove at the latest block, validates the amounts with the same engine, computes SortedTroves hints, runs `eth_call` from the owner, estimates gas and applies `max(estimate × 1.3, floor)`.
-4. The browser decodes the calldata, checks the target contract and chain, and shows contract, network, asset, amount, before → after ICR/HF, gas, approval explanation and a 60 s quote timer.
-5. The wallet signs and sends; the UI tracks pending → receipt.
-6. `POST /api/rescue/verify` verifies the receipt and records it (unique tx hash), then the trove is re-read and the improvement is shown.
+## Contracts (Mezo testnet, chain 31611)
 
-## Mezo / MUSD integration
-
-The integrated lending protocol is **MUSD itself** (Liquity-style CDP: BTC collateral → MUSD debt), verified in the official source `github.com/mezo-org/musd` and live on Mezo testnet.
-
-| Contract | Mezo testnet (chain 31611) |
+| Contract | Address |
 |---|---|
+| **RescueGuard** (this project) | [`0xf100dd7ae2d9dc651e9c9545790aa9c7b5a0e711`](https://explorer.test.mezo.org/address/0xf100dd7ae2d9dc651e9c9545790aa9c7b5a0e711#code) (verified, block 16,776,263) |
+| BorrowerOperationsSignatures | [`0xD757e3646AF370b15f32EB557F0F8380Df7D639e`](https://explorer.test.mezo.org/address/0xD757e3646AF370b15f32EB557F0F8380Df7D639e) |
 | BorrowerOperations | [`0xCdF7028ceAB81fA0C6971208e83fa7872994beE5`](https://explorer.test.mezo.org/address/0xCdF7028ceAB81fA0C6971208e83fa7872994beE5) |
 | TroveManager | [`0xE47c80e8c23f6B4A1aE41c34837a0599D5D16bb0`](https://explorer.test.mezo.org/address/0xE47c80e8c23f6B4A1aE41c34837a0599D5D16bb0) |
 | PriceFeed | [`0x86bCF0841622a5dAC14A313a15f96A95421b9366`](https://explorer.test.mezo.org/address/0x86bCF0841622a5dAC14A313a15f96A95421b9366) |
 | SortedTroves | [`0x722E4D24FD6Ff8b0AC679450F3D91294607268fA`](https://explorer.test.mezo.org/address/0x722E4D24FD6Ff8b0AC679450F3D91294607268fA) |
 | HintHelpers | [`0x4e4cBA3779d56386ED43631b4dCD6d8EacEcBCF6`](https://explorer.test.mezo.org/address/0x4e4cBA3779d56386ED43631b4dCD6d8EacEcBCF6) |
-| InterestRateManager | [`0xD4D6c36A592A2c5e86035A6bca1d57747a567f37`](https://explorer.test.mezo.org/address/0xD4D6c36A592A2c5e86035A6bca1d57747a567f37) |
-| StabilityPool | [`0x1CCA7E410eE41739792eA0A24e00349Dd247680e`](https://explorer.test.mezo.org/address/0x1CCA7E410eE41739792eA0A24e00349Dd247680e) |
 | MUSD token | [`0x118917a40FAF1CD7a13dB0Ef56C86De7973Ac503`](https://explorer.test.mezo.org/token/0x118917a40FAF1CD7a13dB0Ef56C86De7973Ac503) |
-| Multicall3 | [`0xcA11bde05977b3631167028862bE2a173976CA11`](https://explorer.test.mezo.org/address/0xcA11bde05977b3631167028862bE2a173976CA11) (bytecode verified present) |
+| Mezo Pools router | [`0x9a1ff7FE3a0F69959A3fBa1F1e5ee18e1A9CD7E9`](https://explorer.test.mezo.org/address/0x9a1ff7FE3a0F69959A3fBa1F1e5ee18e1A9CD7E9) |
+| Multicall3 | [`0xcA11bde05977b3631167028862bE2a173976CA11`](https://explorer.test.mezo.org/address/0xcA11bde05977b3631167028862bE2a173976CA11) |
 
-Sources: `solidity/artifacts/deployments/matsnet/*.json` in mezo-org/musd (matsnet = Mezo testnet; its MUSD address matches the [Mezo contracts reference](https://mezo.org/docs/users/resources/contracts-reference)). Mainnet addresses from `deployments/mainnet` are listed in Settings for read-only reference. All addresses live in `src/config/contracts.ts`; ABIs in `src/config/abis.ts` are copied verbatim from the artifacts. `npm run probe` re-checks bytecode, parameters, oracle freshness and the no-approval repay path live.
+Deployment record: [`deployments/mezo-testnet.json`](deployments/mezo-testnet.json). An earlier deployment from the previous key, `0x79876802…`, is kept there marked superseded.
 
-**No custom smart contract is deployed.** The spec asks not to add one without need, and none is needed: rescues call BorrowerOperations directly from the user's wallet.
+## Real transactions (browser e2e, real wallets, Mezo testnet)
 
-### Live rescue transactions (e2e, owner's trove `0x10ac…B628`)
+Driven through the live UI in Chrome by four wallets: the deployer `0x679D…5745`, the demo trove owner `0x10ac…B628`, a third-party watcher `0x7Ff3…9665`, and an outsider `0xDe9F…56ac`. Every hash below was confirmed through the explorer API. Full log: [`deployments/e2e-wave2.json`](deployments/e2e-wave2.json).
 
-| Action | Tx | Block | Effect (same oracle price) |
-|---|---|---|---|
-| `addColl` 0.00001 BTC | [`0x0bd5dc07…3b47`](https://explorer.test.mezo.org/tx/0x0bd5dc075099b8158caf7795cc140150ff14e7055485b1a0888d6f13db023b47) | 16,382,235 | ICR 155.213% → 155.247% |
-| `repayMUSD` 5 MUSD | [`0x175519a8…bb2f`](https://explorer.test.mezo.org/tx/0x175519a8212682dda3b66f345bb091d4baad092bfd48b1fe517e266830f3bb2f) | 16,382,239 | ICR 155.212% → 155.550% |
+| Action | Tx |
+|---|---|
+| Open a trove in the app (0.047 BTC, 1,900 MUSD) | [`0x38a7a3ca…914f`](https://explorer.test.mezo.org/tx/0x38a7a3ca60059cb544f7a71d5b075fc00880656181cd6d71bdb18ef49115914f) |
+| Store a 100 MUSD repay plan: authorization + permit in one tx | [`0x2d43c381…a4d3`](https://explorer.test.mezo.org/tx/0x2d43c381a44c76444bfa530ad0215eaa6935988fe14d11777d321f1fb4d8a4d3) |
+| Change the plan (old authorization retired first, RG-02 fix) | [`0xb322d119…05f6`](https://explorer.test.mezo.org/tx/0xb322d1193f89006cb88f5fc78f5f4d7324a8f4fa7aafa2feee39d0e745fe05f6) |
+| **Third party runs the rescue:** debt −90 MUSD, ratio 148.5% → 155.2%, tip 0.9 MUSD | [`0xab574e6b…52c1`](https://explorer.test.mezo.org/tx/0xab574e6bf2b782928e0d8b18eec224fef8982ac07cd6d17af4d807439a3452c1) |
+| Swap BTC → MUSD through Mezo Pools | [`0x5b83926b…0aba`](https://explorer.test.mezo.org/tx/0x5b83926b5d7ae7c76611916ffb35de2725c435132f255a137ad683a9624d0aba) |
+| Repay through the simulator (prepare → confirm → sign → verify) | [`0x9cf4f7be…b9a0`](https://explorer.test.mezo.org/tx/0x9cf4f7be6dda78a77cf1b6457439e0ee5fa864bb8aa86bf60b7d9a91a845b9a0) |
+| Protect the demo trove: 0.003 BTC top-up below 118% | [`0x3a12bba7…f673`](https://explorer.test.mezo.org/tx/0x3a12bba70edcb3435556d64153685412e9daee62a8a9bcda886448b92d50f673) |
+| Cancel and withdraw everything (`exit`) | [`0x4de8a35a…21d2d`](https://explorer.test.mezo.org/tx/0x4de8a35acd8bdb8cc67cc33520714fc27e60d39cca64adf7268777ea96221d2d) |
+| Second guarded rescue run by a third party (second run) | [`0xdfeeafa7…4cc2`](https://explorer.test.mezo.org/tx/0xdfeeafa7af1ca13b560ff4f198a7b1cb1501f89576a831a65b8e5cd4ba9f4cc2) |
+| RescueGuard deployment | [`0xa9224eb8…6072`](https://explorer.test.mezo.org/tx/0xa9224eb8d6af78f5e8d39ec20ab6004ddfc12f445509166dc52b643c4eb56072) |
 
-Both were prepared by the app's `/api/rescue/prepare` (gas 494,029 / 471,151 with estimates 380k / 362k), signed locally, verified by `/api/rescue/verify` and are visible in the trove's on-chain activity.
+Wave 1 transactions from the same app: `addColl` [`0x0bd5dc07…3b47`](https://explorer.test.mezo.org/tx/0x0bd5dc075099b8158caf7795cc140150ff14e7055485b1a0888d6f13db023b47) and `repayMUSD` [`0x175519a8…bb2f`](https://explorer.test.mezo.org/tx/0x175519a8212682dda3b66f345bb091d4baad092bfd48b1fe517e266830f3bb2f).
 
-## Risk methodology
+## Security
 
-Full write-up in-app at [`/methodology`](https://musd-rescue.vercel.app/methodology). Summary of the rules, all read from the MUSD source:
+Full write-up: **[docs/SECURITY.md](docs/SECURITY.md)**.
 
-- **Debt** = principal + interest from `getEntireDebtAndColl` (includes accrued interest to the current block and pending redistribution). Principal includes the borrowed amount, the 0.1% borrowing fee and the **200 MUSD gas compensation**.
-- **Interest** is simple: `principal × rateBps × seconds / (10,000 × 31,556,952)` at the trove's fixed rate (1.00% on testnet).
-- **ICR** = `coll × price / debt` with Solidity floor division. Our value equals `TroveManager.getCurrentICR` exactly (asserted in the e2e).
-- **Health factor** = ICR ÷ MCR (110%). HF 1.00 is the liquidation line; ICR is always shown next to it.
-- **Liquidation price** = `debt × MCR / coll` (rounded up). **Room to liquidation** = drop from the current oracle price.
-- **Recovery Mode** when TCR < CCR (150%). Shown prominently with the BTC drop that would trigger it. **Important finding:** unlike Liquity v1 / THUSD, *MUSD does not liquidate troves between 110% and 150% in Recovery Mode*. `TroveManager._getTotalsFromBatchLiquidate` liquidates only `ICR < MCR`, and the MUSD CHANGELOG says "Liquidations are now the same in recovery mode and normal mode". Recovery Mode instead blocks withdrawals, closing and refinancing, waives the borrowing fee and requires new debt to leave ICR ≥ 150% and improve it. The engine keeps a per-protocol `recoveryModeLiquidationThreshold` (null for MUSD, CCR for a Liquity-v1-style adapter) and both behaviours are unit tested.
-- **minNetDebt**: after a repayment, `debt − 200 − repay ≥ 1,800`. The maximum repayment without closing is `debt − 2,000`; more requires `closeTrove()` (needs `debt − 200` MUSD and is blocked in Recovery Mode). The simulator enforces this and says so.
-- **Normal Mode adjustments**: every adjustment, including a repayment or top-up, must leave ICR ≥ 110% and TCR ≥ 150%, otherwise it reverts. The simulator blocks rescues that are too small.
-- **Repayments pay interest first**, then principal.
-- **No approval needed for repayment**: BorrowerOperations burns MUSD directly via `MUSD.burn` (it is on `burnList`, verified live), so allowance is never read. Confirmed by simulating `repayMUSD` from a wallet with zero allowance.
-- **Hints**: NICR = `coll × 1e20 / principal` (the sorted list ignores interest, as in `getNominalICR`), `getApproxHint(NICR, ⌈15·√n⌉, seed)`, `findInsertPosition`. With correct hints a repay costs ~360k gas instead of ~4M.
-- **Risk categories** (configurable in Settings): healthy > 2.0, caution 1.5–2.0, high 1.2–1.5, critical ≤ 1.2, liquidatable < 1.0.
-- **Stale data**: `PriceFeed.fetchPrice()` reverts if the oracle is > 60 s old; then every operation would revert, so rescue actions are disabled. Client data is marked aging after 45 s and stale after 2 min; stale data disables rescue actions.
+- An independent review of every function and money path found **RG-01 (Medium)**: in Recovery Mode a rescue that left the trove under 110% was executed and paid. Also **RG-02 (Low)**: a replaced authorization could be replayed to disable the new plan. And **RG-03 (Low)**: an unexecutable repay plan showed as Ready. Each has a failing proof-of-concept committed before its fix (`20c0ab6` → `3fd8b91`) and is now a regression test.
+- Funds leave RescueGuard only to their owner, into the owner's own trove as an authorized rescue, or as the owner-chosen tip (≤ 10%). There are no privileged roles.
+- What a contract cannot prevent (keeper liveness, price gaps, oracle and protocol trust, EOA-only signatures) is spelled out in the same document.
+- App: non-custodial, SIWE sessions in HttpOnly cookies, zod-validated inputs, receipts verified server-side, no keys in the repo or bundle. Scripts read testnet keys at runtime from gitignored files.
 
-## Transaction safety model
+## Testing
 
-Non-custodial; no keys or seed phrases are ever requested. No transaction is initiated without an explicit click on the confirmation screen and a wallet signature. Transaction-critical parameters come from a fresh server-side read, not from the client's simulation. Every write carries an explicit gas limit (Mezo enforces the EIP-7623 calldata floor and the public RPC has returned bogus low estimates). The client checks the prepared calldata decodes to the amounts entered and targets BorrowerOperations on chain 31611. Success is shown only after a verified receipt and a re-read of the trove. Only debt repayments and collateral top-ups are ever prepared; borrowing appears only as a calculator.
+| Suite | Result |
+|---|---|
+| App unit tests (Vitest): risk engine, simulator, transaction flow, alerts, data integrity, guard plan logic incl. an EIP-712 digest cross-check | **107 / 107** |
+| Contract tests (Hardhat): RescueGuard unit tests, reentrancy, signature replay, invariants, 4 audit regressions | **48 / 48** |
+| Fork test against the real MUSD protocol (forked Mezo testnet) | **1 / 1** |
+| Browser e2e on Mezo testnet with real wallets and transactions (`scripts/e2e-browser.ts`) | **19 / 19** |
+| `tsc --noEmit`, `eslint .`, `next build` | clean |
 
-## Tech stack
-
-Next.js 16 (App Router, Turbopack) · React 19 · TypeScript (strict) · Tailwind CSS 4 · Radix primitives · cmdk · sonner · Recharts · React Three Fiber + drei · wagmi 2 + viem 2 + TanStack Query · Neon Postgres (`@neondatabase/serverless`) · jose (JWT sessions) · zod · Vitest · tsx · Vercel (functions, cron, analytics).
+```bash
+npm test                     # Vitest
+npm run contracts:test       # Hardhat unit + audit regression tests
+npm run contracts:test:fork  # RescueGuard against the forked real protocol
+E2E_BASE_URL=http://localhost:3300 npx tsx scripts/e2e-browser.ts   # real testnet txs through the UI
+npm run keeper               # run your own keeper
+```
 
 ## Local setup
 
 ```bash
 npm install
-vercel link --yes --project musd-rescue      # or create your own Neon database
-vercel env pull .env.local --yes             # DATABASE_URL, SESSION_SECRET, CRON_SECRET
-npm run db:migrate                           # idempotent, creates schema "rescue"
-npm run dev                                  # http://localhost:3000
+vercel link --yes --project musd-rescue   # or bring your own Neon database
+vercel env pull .env.local --yes          # DATABASE_URL, SESSION_SECRET, CRON_SECRET
+npm run db:migrate                        # idempotent, schema "rescue"
+npm run dev                               # http://localhost:3000
 ```
 
-Get testnet BTC for gas from the [Mezo faucet](https://faucet.test.mezo.org/). Add Mezo Testnet to your wallet from the account menu (chain 31611, RPC `https://rpc.test.mezo.org`).
-
-### Environment variables (`.env.example`)
+Contracts: `cd contracts && npm install && npx hardhat test`. Deploy with `npm run guard:deploy`, which reads `PRIVATE_KEY` from the gitignored `.env.deployer`, writes `deployments/mezo-testnet.json` and regenerates `src/config/guard.ts`.
 
 | Variable | Purpose |
 |---|---|
-| `DATABASE_URL` | Neon Postgres connection string |
-| `SESSION_SECRET` | HS256 key for the session cookie (48 random bytes) |
-| `CRON_SECRET` | Bearer token Vercel Cron sends to `/api/cron/monitor` |
-| `NEXT_PUBLIC_MEZO_TESTNET_RPC` | optional RPC override |
-| `NEXT_PUBLIC_SITE_URL` | optional canonical URL |
-| `DEPLOYER_ENV_FILE`, `TEST_WALLETS_FILE`, `E2E_BASE_URL` | e2e script only (paths to key files outside the repo, never copied) |
-
-## Database schema (`rescue`)
-
-| Table | Contents |
-|---|---|
-| `siwe_nonces` | single-use sign-in nonces with expiry |
-| `users` | wallet address, preferences (risk thresholds, target HF, browser notifications) |
-| `watchlist` | troves a user follows |
-| `alert_rules` | kind, threshold, frequency, channel, quiet hours, timezone, baseline, last evaluated/triggered |
-| `notifications` | in-app alerts (severity, quiet flag, source: cron/visit/check_now) |
-| `oracle_snapshots` | observed oracle price, TCR, Recovery Mode, totals (unique per block) |
-| `trove_snapshots` | observed trove state and ICR (unique per owner + block) |
-| `rescue_txs` | verified rescue transactions, **UNIQUE tx_hash**, ICR before/after |
-| `activity` | on-chain vs off-chain events, idempotency keys |
-| `monitor_runs` | every monitoring run with outcome, used for "last successful monitoring" |
-
-## Supported networks
-
-- **Mezo Testnet (31611)**: full support, reads and rescue transactions.
-- **Mezo Mainnet (31612)**: contract addresses listed read-only; no transactions. (The mainnet deployment artifacts currently report a single trove on the probed TroveManager, so live mainnet analytics were not prioritised.)
-- Any other chain: explicit unsupported-network banner with a standard wallet switch.
-
-## Testing
-
-```bash
-npm test          # Vitest unit tests
-npm run lint      # ESLint (clean)
-npm run build     # production build (zero type errors)
-npm run probe     # live read-only protocol probe
-E2E_BASE_URL=http://localhost:3100 npm run e2e   # live e2e (sends 2 small real txs)
-E2E_SKIP_TX=1 E2E_BASE_URL=https://musd-rescue.vercel.app npm run e2e
-```
-
-Latest results (2026-10-26):
-
-- **Vitest: 91 / 91 passing** across 5 files: health factor, collateral thresholds, liquidation price, interest accrual, repay and add-collateral simulation, combined adjustments, minNetDebt cap, Normal-Mode MCR revert, Recovery Mode (MUSD vs Liquity-v1 semantics, fee waiver, borrow rules), target-HF solvers, option comparison, token decimals (incl. 6-decimal tokens), zero debt, zero collateral, missing/stale price, extreme moves (−100%, +1000%, 1e40 prices), unsupported networks, wallet disconnection, failed and rejected transactions, rejected approvals, successful repayment and post-transaction refresh, receipt verification (reverted, wrong contract, wrong sender, burn mismatch, missing event, unconfirmed, non-rescue calls), gas floors, alert rules (transitions, cooldowns, deltas, quiet hours, stale data), demo/live separation.
-- **Live e2e, local `next start`: 36 / 36** including the two real rescue transactions above.
-- **Live e2e, production: 21 / 21** (read paths, SIWE, negatives, re-verification of the two transactions through the deployed app, alerts).
-- Post-deploy: every page route and `/api/health` return 200; unknown route 404; cron without secret 401.
+| `DATABASE_URL` | Neon Postgres |
+| `SESSION_SECRET` | HS256 key for the session cookie |
+| `CRON_SECRET` | Bearer token for `/api/cron/monitor` |
+| `KEEPER_PRIVATE_KEY` | optional: testnet key the server keeper uses to run Ready rescues (earns tips, never holds user funds) |
+| `NEXT_PUBLIC_MEZO_TESTNET_RPC`, `NEXT_PUBLIC_SITE_URL` | optional overrides |
 
 ## Known limitations
 
-- Monitoring is not continuous: Vercel Hobby allows one cron per day (06:00 UTC); checks also run on every visit (throttled to once a minute) and on Check now. A fast BTC move between checks is not caught.
-- Alerts are in-app plus browser notifications while a tab is open. No email/SMS/Telegram (no delivery infrastructure was built and tested).
-- Prepared transactions do not use EIP-712 `*WithSignature` flows; the wallet sends `repayMUSD` / `addColl` / `adjustTrove` directly.
-- Closing a trove is explained but not offered as a one-click action.
-- Health-factor history covers the trove's lifetime only; history before a trove opened is empty by design.
-- The in-memory rate limiter and caches are per serverless instance.
-- Mainnet is reference-only (see above).
+- Rescues are permissionless, not instant: someone has to call `execute`. On Vercel Hobby the cron runs daily. For continuous coverage, run `npm run keeper` (anyone can) or press "Run rescue now".
+- A plan is one rescue. After it runs, the borrower arms a new one.
+- BOS signatures are ECDSA, so smart-contract wallets cannot sign plans.
+- Alerts are in-app and in the browser. No email or push delivery.
+- Mainnet addresses are listed read-only. No mainnet transactions.
 
-## Security notes
+## Roadmap
 
-No private keys in the repo, env files or bundle; the e2e script reads keys at runtime from files outside the project. Sessions are HttpOnly, Secure, SameSite=Lax JWTs; state-changing routes check Origin. All inputs validated with zod; every user-owned row is authorised against the session; tx hashes are unique; on-chain claims are verified from receipts, never trusted from the client. Security headers (HSTS, frame-deny, nosniff, referrer and permissions policy) are set globally.
-
-## Demo script (2 minutes)
-
-1. Open **https://musd-rescue.vercel.app**. Drag the BTC slider under the 3D scene: the owner's real trove sinks toward the red 110% plane and turns from amber to red. The strip at the top shows the live oracle, TCR and Recovery Mode distance.
-2. Click **Liquidation radar**: ~350 real troves, how many fall below 110% after a 10% or 20% drop.
-3. Paste `0x10ac9924a78051BdD770978740C5084205cdB628` into "Check any trove" (or ⌘K): live ICR 155.5%, HF 1.41 (high risk), debt breakdown with the 200 MUSD gas compensation, real oracle and HF history, the two rescue transactions in the activity log.
-4. Open **Rescue simulator**: pick −20%, see it become critical; set target HF 1.5 and compare "Repay MUSD" (~125 MUSD), "Add BTC" and "Both"; try repaying 1,000 MUSD and see the minNetDebt block.
-5. With your own wallet: get testnet BTC at https://faucet.test.mezo.org/, open a trove in the Mezo app, connect here, sign in, and rescue it: confirmation screen → wallet → verified result.
-6. Open **Demo** for three fictional positions if you have no trove.
-
-## Pitch and roadmap
-
-Every CDP borrower eventually faces the same five minutes: BTC is falling, and the question is how much to repay and whether the contract will accept it. MUSD Rescue answers with the protocol's own arithmetic and executes the answer safely. Next: EIP-712 signature-based rescues so a pre-authorised keeper could act within user-set limits, Stability Pool-aware liquidation previews, push/email delivery, a mainnet read-only view once MUSD's mainnet deployment artifacts are confirmed, and more Mezo lending adapters through the existing `LendingAdapter` interface.
+Multi-step plans (several pre-signed rescues at successive nonces), a keeper network with tip markets, Stability-Pool-aware liquidation previews, push and email alerts, a mainnet launch of RescueGuard after an external audit, and more Mezo lending adapters through the existing `LendingAdapter` interface.
 
 ---
 
-Original product specification: [`project.md`](./project.md).
+Built for the Mezo ecosystem. Testnet software. Not financial advice.
