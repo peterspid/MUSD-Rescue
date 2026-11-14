@@ -25,9 +25,9 @@ function planDTO(p: RawPlan | undefined): GuardPlanDTO | null {
 export async function readGuard(owner: Address): Promise<GuardDTO> {
   const c = chainClient();
   const blockNumber = await c.getBlockNumber();
-  const empty: GuardDTO = { deployed: false, address: RESCUE_GUARD.address, owner, status: "none", icr: null, price: null, plan: null, reserves: { musd: "0", btc: "0" }, currentNonce: "0", blockNumber: blockNumber.toString(), fetchedAt: Date.now() };
+  const empty: GuardDTO = { deployed: false, address: RESCUE_GUARD.address, owner, status: "none", icr: null, price: null, plan: null, reserves: { musd: "0", btc: "0" }, currentNonce: "0", outstanding: { live: false, deadline: 0 }, blockNumber: blockNumber.toString(), fetchedAt: Date.now() };
   if (!guardDeployed()) return empty;
-  const [plan, status, musd, btc, nonce] = await c.multicall({
+  const [plan, status, musd, btc, nonce, outstanding] = await c.multicall({
     blockNumber,
     allowFailure: false,
     contracts: [
@@ -36,6 +36,7 @@ export async function readGuard(owner: Address): Promise<GuardDTO> {
       { ...G, functionName: "musdReserve", args: [owner] },
       { ...G, functionName: "btcReserve", args: [owner] },
       { address: RESCUE_GUARD.borrowerOperationsSignatures, abi: borrowerOperationsSignaturesAbi, functionName: "getNonce", args: [owner] },
+      { ...G, functionName: "outstandingAuthorization", args: [owner] },
     ],
   });
   const [st, icr, price] = status as unknown as readonly [number, bigint, bigint];
@@ -48,6 +49,10 @@ export async function readGuard(owner: Address): Promise<GuardDTO> {
     plan: planDTO(plan as unknown as RawPlan),
     reserves: { musd: String(musd), btc: String(btc) },
     currentNonce: String(nonce),
+    outstanding: (() => {
+      const [live, , deadline] = outstanding as unknown as readonly [boolean, bigint, bigint];
+      return { live, deadline: Number(deadline) };
+    })(),
   };
 }
 

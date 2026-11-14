@@ -43,6 +43,7 @@ export const musdPermitAbi = parseAbi([
 /** BorrowerOperationsSignatures: the EIP-712 entry point RescueGuard executes through. */
 export const borrowerOperationsSignaturesAbi = parseAbi([
   "function getNonce(address user) view returns (uint256)",
+  "function addCollWithSignature(address _upperHint, address _lowerHint, address _borrower, bytes _signature, uint256 _deadline) payable",
   "function eip712Domain() view returns (bytes1 fields, string name, string version, uint256 chainId, address verifyingContract, bytes32 salt, uint256[] extensions)",
 ]);
 
@@ -55,6 +56,8 @@ export const GUARD_GAS_FLOORS = {
   deposit: 200_000n,
   withdraw: 150_000n,
   disarm: 80_000n,
+  /** 1-wei signed top-up through BorrowerOperationsSignatures that moves the nonce on */
+  retire: 1_000_000n,
   exit: 250_000n,
   /** execute = guard checks + BorrowerOperationsSignatures + a full trove adjustment and re-sort */
   execute: 1_200_000n,

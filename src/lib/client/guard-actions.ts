@@ -118,6 +118,29 @@ export async function withdrawReserve(owner: string, asset: "musd" | "btc", amou
   return simulateAndWrite({ ...G, functionName: asset === "musd" ? "withdrawMUSD" : "withdrawBTC", args: [amount], account: getAddress(owner) }, GUARD_GAS_FLOORS.withdraw);
 }
 
+/**
+ * Retire an earlier authorization that is still valid at the protocol (needed before storing a different plan,
+ * audit RG-02): sign and submit a 1-wei BTC top-up through BorrowerOperationsSignatures from your own wallet. It adds
+ * 0.000000000000000001 BTC of collateral and moves your signature nonce on, which voids every older authorization.
+ */
+export async function retireAuthorization(owner: string, onStep?: (s: string) => void): Promise<Hex> {
+  const o = getAddress(owner);
+  const [domain, nonce, now] = await Promise.all([
+    domainOf(RESCUE_GUARD.borrowerOperationsSignatures, borrowerOperationsSignaturesAbi),
+    readContract(wagmiConfig, { address: RESCUE_GUARD.borrowerOperationsSignatures, abi: borrowerOperationsSignaturesAbi, functionName: "getNonce", args: [o], chainId: CHAIN_ID }),
+    chainNow(),
+  ]);
+  const deadline = now + 1_800n;
+  onStep?.("Sign a 1-wei collateral top-up. It retires your previous authorization.");
+  const signature = await signTypedData(wagmiConfig, { account: o, ...addCollAuthorizationTypedData(domain, { amount: 1n, borrower: o, nonce, deadline }) });
+  onStep?.("Confirm the transaction that submits it.");
+  const zero = "0x0000000000000000000000000000000000000000" as Address;
+  return simulateAndWrite(
+    { address: RESCUE_GUARD.borrowerOperationsSignatures, abi: borrowerOperationsSignaturesAbi, functionName: "addCollWithSignature", args: [zero, zero, o, signature, deadline], value: 1n, account: o, chainId: CHAIN_ID },
+    GUARD_GAS_FLOORS.retire,
+  );
+}
+
 export async function disarmPlan(owner: string): Promise<Hex> {
   return simulateAndWrite({ ...G, functionName: "disarm", account: getAddress(owner) }, GUARD_GAS_FLOORS.disarm);
 }

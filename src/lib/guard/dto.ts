@@ -22,6 +22,8 @@ export interface GuardDTO {
   reserves: { musd: string; btc: string };
   /** BorrowerOperationsSignatures nonce the next authorization must be signed for. */
   currentNonce: string;
+  /** An earlier authorization accepted by RescueGuard that is still usable at the protocol (audit RG-02). */
+  outstanding: { live: boolean; deadline: number };
   blockNumber: string;
   fetchedAt: number;
 }

@@ -24,7 +24,7 @@ export function kindFromId(id: number): GuardKind | null {
 }
 
 /** RescueGuard.Status, in contract order. */
-export const GUARD_STATUSES = ["none", "waiting", "ready", "expired", "stale", "underfunded", "trove-inactive", "oracle-unavailable"] as const;
+export const GUARD_STATUSES = ["none", "waiting", "ready", "expired", "stale", "underfunded", "trove-inactive", "oracle-unavailable", "unexecutable"] as const;
 export type GuardStatus = (typeof GUARD_STATUSES)[number];
 export function statusFromId(id: number): GuardStatus {
   return GUARD_STATUSES[id] ?? "none";
@@ -39,6 +39,7 @@ export const STATUS_COPY: Record<GuardStatus, { label: string; detail: string }>
   underfunded: { label: "Reserve too small", detail: "The reserve no longer covers the rescue amount plus the keeper tip. Top it up or arm a smaller plan." },
   "trove-inactive": { label: "No open trove", detail: "The trove is closed or was liquidated, so there is nothing to rescue. Withdraw the reserve." },
   "oracle-unavailable": { label: "Oracle unavailable", detail: "The MUSD price feed is stale. Every trove operation reverts until it updates, including rescues." },
+  unexecutable: { label: "Repayment too large", detail: "The trove's debt fell, so this repayment would now take net debt below the 1,800 MUSD minimum and the protocol would reject it. Arm a smaller repayment or a BTC top-up." },
 };
 
 /** BTC price at which a trove's ICR reaches `icr`: price = icr × debt / coll (rounded up). */
@@ -236,6 +237,9 @@ const GUARD_ERRORS: Record<string, string> = {
   ECDSAInvalidSignature: "The signature is invalid.",
   ECDSAInvalidSignatureLength: "The signature is malformed.",
   ReentrancyGuardReentrantCall: "Re-entrant call blocked.",
+  RescueLeavesTroveLiquidatable: "This rescue would still leave the trove under 110%, where it can be liquidated, so it was stopped and the reserve kept. A larger plan is needed.",
+  OutstandingAuthorization: "Your previous authorization is still valid at the protocol. Retire it first, then store the new plan.",
+  PlanBelowMinNetDebt: "This repayment would take net debt below the 1,800 MUSD minimum, so the protocol would reject it. Use a smaller amount.",
 };
 
 export function explainGuardError(e: unknown): string {

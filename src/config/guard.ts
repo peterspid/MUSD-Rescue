@@ -147,6 +147,43 @@ export const rescueGuardAbi = [
     "type": "error"
   },
   {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "nonce",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "deadline",
+        "type": "uint256"
+      }
+    ],
+    "name": "OutstandingAuthorization",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "debt",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "minimumDebtAfter",
+        "type": "uint256"
+      }
+    ],
+    "name": "PlanBelowMinNetDebt",
+    "type": "error"
+  },
+  {
     "inputs": [],
     "name": "ReentrancyGuardReentrantCall",
     "type": "error"
@@ -165,6 +202,22 @@ export const rescueGuardAbi = [
       }
     ],
     "name": "RescueDidNotImprove",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "icrAfter",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "mcr",
+        "type": "uint256"
+      }
+    ],
+    "name": "RescueLeavesTroveLiquidatable",
     "type": "error"
   },
   {
@@ -919,6 +972,35 @@ export const rescueGuardAbi = [
       {
         "internalType": "uint256",
         "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "borrower",
+        "type": "address"
+      }
+    ],
+    "name": "outstandingAuthorization",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "live",
+        "type": "bool"
+      },
+      {
+        "internalType": "uint256",
+        "name": "nonce",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "deadline",
         "type": "uint256"
       }
     ],
