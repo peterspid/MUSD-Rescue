@@ -1,0 +1,47 @@
+{
+  "note": "Testnet e2e wallets (addresses only; keys are never committed).",
+  "wallets": {
+    "deployer": {
+      "address": "0x10ac9924a78051BdD770978740C5084205cdB628",
+      "role": "Owner of the real MUSD trove used in the demo; deploys RescueGuard and funds the others."
+    },
+    "keeper": {
+      "address": "0x2C449e6d7F486c7a4c2EAFF35D4E379c7020f3C6",
+      "role": "Runs ready rescues for the keeper tip."
+    },
+    "watcher": {
+      "address": "0x7Ff3cF33ee66a5DB788ddA2469fA125A8C279665",
+      "role": "Second user: watches troves, swaps BTC for MUSD."
+    },
+    "outsider": {
+      "address": "0xDe9F8E0a8CA1034dA410344a34Ce78A1999d56ac",
+      "role": "Attempts unauthorized actions (negative tests)."
+    }
+  },
+  "funding": [
+    {
+      "role": "keeper",
+      "to": "0x2C449e6d7F486c7a4c2EAFF35D4E379c7020f3C6",
+      "value": "0.002",
+      "tx": "0x09b9ad6b22f618ec0b9466af51110347539415b2d8ec74c90736c46f80b04f93",
+      "block": 16773520,
+      "at": "2026-11-14T10:24:43.300Z"
+    },
+    {
+      "role": "watcher",
+      "to": "0x7Ff3cF33ee66a5DB788ddA2469fA125A8C279665",
+      "value": "0.004",
+      "tx": "0x86b3954bc24da26ae145c9d1ae4231d3fe763790be85b5dfa3c00df352f10218",
+      "block": 16773521,
+      "at": "2026-11-14T10:24:49.602Z"
+    },
+    {
+      "role": "outsider",
+      "to": "0xDe9F8E0a8CA1034dA410344a34Ce78A1999d56ac",
+      "value": "0.0005",
+      "tx": "0xf1c7db1391b2b12dc62a93c8f322e01b6a104ae6dbeca0b8e5dd6231e3898279",
+      "block": 16773523,
+      "at": "2026-11-14T10:24:55.847Z"
+    }
+  ]
+}
