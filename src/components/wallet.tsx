@@ -6,6 +6,7 @@ import { LogOut, Plug, TriangleAlert, Wallet, X, KeyRound, Coins, Network } from
 import { toast } from "sonner";
 import { Button, CopyButton, cn } from "./ui";
 import { useSession } from "./session";
+import { SwapDialog } from "./swap-dialog";
 import { classifyChain, mezoTestnet } from "@/config/chains";
 import { MUSD_CONTRACTS, ABIS } from "@/config/contracts";
 import { formatAmount, formatBtc, shortAddress } from "@/lib/risk/format";
@@ -92,6 +93,7 @@ export function ConnectButton({ size = "md", label = "Connect wallet" }: { size?
   const { address, isConnected } = useAccount();
   const [open, setOpen] = useState(false);
   const [menu, setMenu] = useState(false);
+  const [swap, setSwap] = useState(false);
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
   if (!mounted) return <Button size={size} variant="primary" disabled>{label}</Button>;
@@ -110,12 +112,13 @@ export function ConnectButton({ size = "md", label = "Connect wallet" }: { size?
         <span className="size-2 rounded-full bg-blue" aria-hidden />
         <span className="addr">{shortAddress(address)}</span>
       </Button>
-      {menu && <AccountMenu onClose={() => setMenu(false)} />}
+      {menu && <AccountMenu onClose={() => setMenu(false)} onSwap={() => setSwap(true)} />}
+      <SwapDialog open={swap} onOpenChange={setSwap} />
     </div>
   );
 }
 
-function AccountMenu({ onClose }: { onClose: () => void }) {
+function AccountMenu({ onClose, onSwap }: { onClose: () => void; onSwap: () => void }) {
   const { address } = useAccount();
   const { disconnect } = useDisconnect();
   const session = useSession();
@@ -161,6 +164,16 @@ function AccountMenu({ onClose }: { onClose: () => void }) {
               Sign in with this wallet
             </Button>
           )}
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => {
+              onClose();
+              onSwap();
+            }}
+          >
+            <Coins className="size-3.5" /> Get MUSD with BTC
+          </Button>
           <WalletHelpers compact />
           <Button
             size="sm"

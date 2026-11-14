@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowRight, Crosshair, Info, Lock, Target, TriangleAlert, OctagonAlert } from "lucide-react";
+import { ArrowRight, Coins, Crosshair, Info, Lock, Target, TriangleAlert, OctagonAlert } from "lucide-react";
+import { SwapDialog } from "./swap-dialog";
 import {
   WAD,
   applyBpsChange,
@@ -49,6 +50,7 @@ export function Simulator(props: SimulatorProps) {
   const [changeBps, setChangeBps] = useState(0);
   const [tab, setTab] = useState<Tab>("repay");
   const [repayStr, setRepayStr] = useState("");
+  const [swapOpen, setSwapOpen] = useState(false);
   const [collStr, setCollStr] = useState("");
   const [borrowStr, setBorrowStr] = useState("");
   const [targetStr, setTargetStr] = useState(String(props.defaultTargetHF ?? 1.5));
@@ -217,6 +219,15 @@ export function Simulator(props: SimulatorProps) {
                   {wallet?.musd !== undefined && (
                     <>
                       {" "}| Wallet: <button type="button" className="num text-blue underline-offset-4 hover:underline" onClick={() => setRepayStr(toInputString(wallet.musd! < sim.maxRepay ? wallet.musd! : sim.maxRepay))}>{formatAmount(wallet.musd)}</button>
+                    </>
+                  )}
+                  {wallet?.musd !== undefined && repay?.ok && repay.value > wallet.musd && (
+                    <>
+                      {" "}|{" "}
+                      <button type="button" className="inline-flex items-center gap-1 text-blue underline-offset-4 hover:underline" onClick={() => setSwapOpen(true)}>
+                        <Coins className="size-3.5" aria-hidden /> Get MUSD with BTC
+                      </button>
+                      <SwapDialog open={swapOpen} onOpenChange={setSwapOpen} needMusd={repay.value - wallet.musd + 10n ** 16n} />
                     </>
                   )}
                 </>
