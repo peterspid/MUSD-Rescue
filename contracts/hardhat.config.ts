@@ -4,6 +4,9 @@ import "@nomicfoundation/hardhat-toolbox";
 // Compile/test/verify only. Deployment to Mezo testnet is done by ../scripts/deploy-guard.ts (viem, explicit gas,
 // key read at runtime from a file outside the repo).
 // Mezo notes: evmVersion london (no mcopy/push0 surprises) and OpenZeppelin 5.0.2.
+// Fork mode: FORK=1, or simply target the fork test file (cross-platform: npx hardhat test test/fork/...).
+if (process.argv.some((x) => /test[\\/]fork/.test(x))) process.env.FORK = "1";
+
 const config: HardhatUserConfig = {
   solidity: {
     version: "0.8.24",

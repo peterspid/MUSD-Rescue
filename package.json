@@ -13,7 +13,13 @@
     "test:watch": "vitest",
     "db:migrate": "tsx scripts/migrate.ts",
     "e2e": "tsx scripts/e2e-testnet.ts",
-    "probe": "tsx scripts/probe-chain.ts"
+    "probe": "tsx scripts/probe-chain.ts",
+    "keeper": "tsx scripts/keeper.ts",
+    "guard:deploy": "tsx scripts/deploy-guard.ts",
+    "guard:sync": "tsx scripts/sync-guard-config.ts",
+    "wallets:fund": "tsx scripts/fund-wallets.ts",
+    "contracts:test": "cd contracts && npx hardhat test",
+    "contracts:test:fork": "cd contracts && npx hardhat test test/fork/RescueGuard.fork.test.ts"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.2.0",
