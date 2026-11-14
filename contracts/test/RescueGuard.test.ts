@@ -6,7 +6,7 @@ import type { RescueGuard, MockBorrowerOperationsSignatures, MockMUSD, MockPrice
 
 const E = (n: string | number) => ethers.parseEther(String(n));
 const KIND = { None: 0, Repay: 1, AddColl: 2 } as const;
-const STATUS = { None: 0, Waiting: 1, Ready: 2, Expired: 3, StaleAuthorization: 4, Underfunded: 5, TroveNotActive: 6, OracleUnavailable: 7 } as const;
+const STATUS = { None: 0, Waiting: 1, Ready: 2, Expired: 3, StaleAuthorization: 4, Underfunded: 5, TroveNotActive: 6, OracleUnavailable: 7, Unexecutable: 8 } as const;
 const ZERO = ethers.ZeroAddress;
 
 // A trove at $60,000 BTC: 0.05 BTC (= $3,000) against 2,300 MUSD debt -> ICR ~130.4%.
@@ -290,15 +290,67 @@ describe("RescueGuard", () => {
       await expect(ctx.guard.connect(ctx.alice).armRepay({ amount: E(100), keeperTip: E(1), triggerIcr: E("1.3"), deadline }, sig)).to.be.revertedWithCustomError(ctx.guard, "InsufficientReserve").withArgs(0, E(101));
     });
 
-    it("replaces an existing plan when re-armed", async () => {
+    it("re-arms the same authorization with a new trigger or tip", async () => {
+      const ctx = await loadFixture(deploy);
+      const p = await armedRepay(ctx);
+      await ctx.guard.connect(ctx.alice).armRepay({ amount: p.amount, keeperTip: 0, triggerIcr: E("1.4"), deadline: p.deadline }, p.sig);
+      const plan = await ctx.guard.getPlan(ctx.alice.address);
+      expect(plan.triggerIcr).to.equal(E("1.4"));
+      expect(plan.keeperTip).to.equal(0);
+    });
+
+    it("refuses a different authorization while the previous one is still live at the same nonce (audit RG-02)", async () => {
+      const ctx = await loadFixture(deploy);
+      const p = await armedRepay(ctx);
+      const deadline = await deadlineIn(86_400);
+      const sig = await signAuthorization(ctx, ctx.alice, "Repay", E(50), deadline);
+      await expect(ctx.guard.connect(ctx.alice).armRepay({ amount: E(50), keeperTip: 0, triggerIcr: E("1.4"), deadline }, sig))
+        .to.be.revertedWithCustomError(ctx.guard, "OutstandingAuthorization")
+        .withArgs(0, p.deadline);
+      // disarming does not retire the signature at BorrowerOperationsSignatures, so it does not lift the block either
+      await ctx.guard.connect(ctx.alice).disarm();
+      await expect(ctx.guard.connect(ctx.alice).armRepay({ amount: E(50), keeperTip: 0, triggerIcr: E("1.4"), deadline }, sig)).to.be.revertedWithCustomError(ctx.guard, "OutstandingAuthorization");
+      const [live, nonce] = await ctx.guard.outstandingAuthorization(ctx.alice.address);
+      expect(live).to.equal(true);
+      expect(nonce).to.equal(0);
+    });
+
+    it("accepts a new authorization once the nonce has moved on", async () => {
       const ctx = await loadFixture(deploy);
       await armedRepay(ctx);
+      await ctx.bos.burnNonce(ctx.alice.address); // e.g. the borrower used any signed BOS operation
+      expect((await ctx.guard.outstandingAuthorization(ctx.alice.address))[0]).to.equal(false);
       const deadline = await deadlineIn(86_400);
       const sig = await signAuthorization(ctx, ctx.alice, "Repay", E(50), deadline);
       await ctx.guard.connect(ctx.alice).armRepay({ amount: E(50), keeperTip: 0, triggerIcr: E("1.4"), deadline }, sig);
       const plan = await ctx.guard.getPlan(ctx.alice.address);
       expect(plan.amount).to.equal(E(50));
-      expect(plan.triggerIcr).to.equal(E("1.4"));
+      expect(plan.nonce).to.equal(1);
+    });
+
+    it("accepts a new authorization at the same nonce once the previous one has expired", async () => {
+      const ctx = await loadFixture(deploy);
+      const p = await armedRepay(ctx);
+      await time.increaseTo(p.deadline + 1n);
+      const deadline = await deadlineIn(86_400);
+      const sig = await signAuthorization(ctx, ctx.alice, "Repay", E(50), deadline);
+      await expect(ctx.guard.connect(ctx.alice).armRepay({ amount: E(50), keeperTip: 0, triggerIcr: E("1.4"), deadline }, sig)).to.emit(ctx.guard, "Armed");
+    });
+
+    it("refuses a repay plan that would break minimum net debt (audit RG-03)", async () => {
+      const ctx = await loadFixture(deploy);
+      // debt 2,300: the largest repayment allowed is 2,300 - 200 - 1,800 = 300 MUSD
+      const deadline = await deadlineIn(86_400);
+      await ctx.musd.connect(ctx.alice).approve(await ctx.guard.getAddress(), E(400));
+      await ctx.guard.connect(ctx.alice).depositMUSD(E(400));
+      const big = await signAuthorization(ctx, ctx.alice, "Repay", E("300.01"), deadline);
+      await expect(ctx.guard.connect(ctx.alice).armRepay({ amount: E("300.01"), keeperTip: 0, triggerIcr: E("1.3"), deadline }, big))
+        .to.be.revertedWithCustomError(ctx.guard, "PlanBelowMinNetDebt")
+        .withArgs(DEBT, E("300.01"), E(2_000));
+      await time.increaseTo(deadline + 1n); // let that authorization lapse so a different one can be stored
+      const d2 = await deadlineIn(86_400);
+      const ok = await signAuthorization(ctx, ctx.alice, "Repay", E(300), d2);
+      await expect(ctx.guard.connect(ctx.alice).armRepay({ amount: E(300), keeperTip: 0, triggerIcr: E("1.3"), deadline: d2 }, ok)).to.emit(ctx.guard, "Armed");
     });
   });
 
@@ -398,14 +450,17 @@ describe("RescueGuard", () => {
       await expect(ctx.guard.execute(ctx.alice.address, ZERO, ZERO)).to.be.revertedWith("PriceFeed: Oracle is stale.");
     });
 
-    it("rolls back completely when the protocol rejects the rescue (minNetDebt)", async () => {
+    it("reports a repay plan that became infeasible as Unexecutable, and rolls back if the protocol rejects it", async () => {
       const ctx = await loadFixture(deploy);
-      // 400 MUSD would leave net debt 2300-200-400 = 1700 < 1800
-      await armedRepay(ctx, { amount: E(400), tip: 0n, deposit: E(400) });
+      await armedRepay(ctx, { amount: E(250), tip: 0n, deposit: E(250) });
       await ctx.pf.setPrice(E(55_000));
+      expect((await ctx.guard.planStatus(ctx.alice.address))[0]).to.equal(STATUS.Ready);
+      // governance raises minNetDebt after the plan was stored: 2,300 - 200 - 250 = 1,850 < 1,900
+      await ctx.bos.setMinNetDebt(E(1_900));
+      expect((await ctx.guard.planStatus(ctx.alice.address))[0]).to.equal(STATUS.Unexecutable);
       await expect(ctx.guard.execute(ctx.alice.address, ZERO, ZERO)).to.be.revertedWith("BorrowerOps: Trove's net debt must be greater than minimum");
       expect((await ctx.guard.getPlan(ctx.alice.address)).kind).to.equal(KIND.Repay);
-      expect(await ctx.guard.musdReserve(ctx.alice.address)).to.equal(E(400));
+      expect(await ctx.guard.musdReserve(ctx.alice.address)).to.equal(E(250));
     });
 
     it("rolls back when the rescue is too small to clear MCR", async () => {

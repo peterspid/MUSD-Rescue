@@ -79,6 +79,12 @@ contract MockTroveManager {
         return (t.coll * price) / t.debt;
     }
 
+    /// @dev Real TroveManager getter (coll, principal, interest, pending...). The mock keeps all debt as principal.
+    function getEntireDebtAndColl(address borrower) external view returns (uint256, uint256, uint256, uint256, uint256, uint256) {
+        Trove memory t = troves[borrower];
+        return (t.coll, t.debt, 0, 0, 0, 0);
+    }
+
     function applyAdjustment(address borrower, uint256 collIncrease, uint256 debtDecrease) external {
         require(msg.sender == operator, "TM: caller is not operator");
         troves[borrower].coll += collIncrease;
@@ -96,9 +102,10 @@ contract MockBorrowerOperationsSignatures is EIP712 {
     bytes32 private constant REPAY_MUSD_TYPEHASH =
         keccak256("RepayMUSD(uint256 amount,address borrower,uint256 nonce,uint256 deadline)");
 
+    // BorrowerOperations parameters (this mock plays both BOS and BorrowerOperations: borrowerOperations() == this).
     uint256 public constant MCR = 1.1e18;
-    uint256 public constant GAS_COMPENSATION = 200e18;
-    uint256 public constant MIN_NET_DEBT = 1_800e18;
+    uint256 public constant MUSD_GAS_COMPENSATION = 200e18;
+    uint256 public minNetDebt = 1_800e18;
 
     mapping(address => uint256) private nonces;
     MockMUSD public immutable musd;
@@ -122,6 +129,14 @@ contract MockBorrowerOperationsSignatures is EIP712 {
         skipStateUpdate = s;
     }
 
+    function borrowerOperations() external view returns (address) {
+        return address(this);
+    }
+
+    function setMinNetDebt(uint256 m) external {
+        minNetDebt = m;
+    }
+
     function getNonce(address user) public view returns (uint256) {
         return nonces[user];
     }
@@ -142,7 +157,7 @@ contract MockBorrowerOperationsSignatures is EIP712 {
         _verifySignature(REPAY_MUSD_TYPEHASH, abi.encode(_amount, _borrower), _borrower, _signature, _deadline);
         require(troveManager.getTroveStatus(_borrower) == 1, "BorrowerOps: Trove does not exist or is closed");
         (uint256 coll, uint256 debt, ) = troveManager.troves(_borrower);
-        require(debt - GAS_COMPENSATION - _amount >= MIN_NET_DEBT, "BorrowerOps: Trove's net debt must be greater than minimum");
+        require(debt - MUSD_GAS_COMPENSATION - _amount >= minNetDebt, "BorrowerOps: Trove's net debt must be greater than minimum");
         uint256 price = priceFeed.fetchPrice();
         require((coll * price) / (debt - _amount) >= MCR, "BorrowerOps: An operation that would result in ICR < MCR is not permitted");
         require(musd.balanceOf(msg.sender) >= _amount, "BorrowerOps: Caller doesnt have enough mUSD to make repayment");

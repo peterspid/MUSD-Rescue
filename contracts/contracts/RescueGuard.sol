@@ -30,6 +30,8 @@ interface IBorrowerOperationsSignatures {
 
     function getNonce(address user) external view returns (uint256);
 
+    function borrowerOperations() external view returns (address);
+
     function eip712Domain()
         external
         view
@@ -48,6 +50,27 @@ interface ITroveManager {
     function getCurrentICR(address _borrower, uint256 _price) external view returns (uint256);
 
     function getTroveStatus(address _borrower) external view returns (uint8);
+
+    function getEntireDebtAndColl(address _borrower)
+        external
+        view
+        returns (
+            uint256 coll,
+            uint256 principal,
+            uint256 interest,
+            uint256 pendingCollateral,
+            uint256 pendingPrincipal,
+            uint256 pendingInterest
+        );
+}
+
+/// @dev Protocol parameters read live from BorrowerOperations (MCR is constant, minNetDebt is governable).
+interface IBorrowerOperationsParams {
+    function MCR() external view returns (uint256);
+
+    function MUSD_GAS_COMPENSATION() external view returns (uint256);
+
+    function minNetDebt() external view returns (uint256);
 }
 
 interface IPriceFeed {
@@ -90,7 +113,8 @@ contract RescueGuard is ReentrancyGuard {
         StaleAuthorization,
         Underfunded,
         TroveNotActive,
-        OracleUnavailable
+        OracleUnavailable,
+        Unexecutable // a repay plan BorrowerOperations would reject (net debt would fall below minNetDebt)
     }
 
     struct Plan {
@@ -141,7 +165,16 @@ contract RescueGuard is ReentrancyGuard {
     IPriceFeed public immutable priceFeed;
     IERC20 public immutable musd;
 
+    /// @dev Last authorization accepted per borrower. Persists across disarm and execute so that a different signature
+    ///      for a nonce whose earlier authorization is still live at BorrowerOperationsSignatures is refused (audit RG-02).
+    struct AuthRecord {
+        uint64 noncePlusOne; // 0 = none
+        uint64 deadline;
+        bytes32 sigHash;
+    }
+
     mapping(address => Plan) private _plans;
+    mapping(address => AuthRecord) private _lastAuth;
     mapping(address => uint256) public musdReserve;
     mapping(address => uint256) public btcReserve;
     /// @notice Sum of all MUSD / BTC reserves. Invariant: never exceeds the contract's balance of that asset.
@@ -186,6 +219,9 @@ contract RescueGuard is ReentrancyGuard {
     error UnexpectedBurn(uint256 expected, uint256 actual);
     error RescueDidNotImprove(uint256 icrBefore, uint256 icrAfter);
     error BTCTransferFailed();
+    error RescueLeavesTroveLiquidatable(uint256 icrAfter, uint256 mcr);
+    error OutstandingAuthorization(uint256 nonce, uint256 deadline);
+    error PlanBelowMinNetDebt(uint256 debt, uint256 amount, uint256 minimumDebtAfter);
 
     constructor(
         IBorrowerOperationsSignatures _borrowerOperationsSignatures,
@@ -311,6 +347,7 @@ contract RescueGuard is ReentrancyGuard {
             );
             uint256 burned = balanceBefore - musd.balanceOf(address(this));
             if (burned != plan.amount) revert UnexpectedBurn(plan.amount, burned);
+            icrAfter = _checkRescued(borrower, price, icrBefore);
             if (plan.keeperTip > 0) musd.safeTransfer(msg.sender, plan.keeperTip);
         } else {
             uint256 available = btcReserve[borrower];
@@ -325,11 +362,9 @@ contract RescueGuard is ReentrancyGuard {
                 plan.signature,
                 plan.deadline
             );
+            icrAfter = _checkRescued(borrower, price, icrBefore);
             if (plan.keeperTip > 0) _sendBTC(msg.sender, plan.keeperTip);
         }
-
-        icrAfter = troveManager.getCurrentICR(borrower, price);
-        if (icrAfter <= icrBefore) revert RescueDidNotImprove(icrBefore, icrAfter);
 
         emit RescueExecuted(borrower, msg.sender, plan.kind, plan.amount, plan.keeperTip, icrBefore, icrAfter, price);
     }
@@ -360,11 +395,22 @@ contract RescueGuard is ReentrancyGuard {
 
         if (block.timestamp > plan.deadline) return (Status.Expired, icr, price);
         if (borrowerOperationsSignatures.getNonce(borrower) != plan.nonce) return (Status.StaleAuthorization, icr, price);
+        if (plan.kind == Kind.Repay && !_repayFeasible(borrower, plan.amount)) return (Status.Unexecutable, icr, price);
         uint256 cost = uint256(plan.amount) + plan.keeperTip;
         uint256 reserve = plan.kind == Kind.Repay ? musdReserve[borrower] : btcReserve[borrower];
         if (reserve < cost) return (Status.Underfunded, icr, price);
         if (icr >= plan.triggerIcr) return (Status.Waiting, icr, price);
         return (Status.Ready, icr, price);
+    }
+
+    /// @notice Whether an earlier authorization accepted here is still usable at BorrowerOperationsSignatures (same
+    ///         nonce, deadline not passed). While it is, only that same signature can be re-armed. To arm a different
+    ///         plan the borrower first moves their nonce on (any signed BorrowerOperationsSignatures operation does it).
+    function outstandingAuthorization(address borrower) public view returns (bool live, uint256 nonce, uint256 deadline) {
+        AuthRecord memory a = _lastAuth[borrower];
+        nonce = borrowerOperationsSignatures.getNonce(borrower);
+        deadline = a.deadline;
+        live = a.noncePlusOne == nonce + 1 && block.timestamp <= a.deadline;
     }
 
     /// @notice The EIP-712 digest a borrower must sign for a plan, computed from the live BorrowerOperationsSignatures domain.
@@ -383,17 +429,11 @@ contract RescueGuard is ReentrancyGuard {
 
     function _arm(Kind kind, PlanInput calldata p, bytes calldata signature) internal {
         address borrower = msg.sender;
-        if (p.amount == 0) revert ZeroAmount();
-        if (p.triggerIcr < MIN_TRIGGER_ICR || p.triggerIcr > MAX_TRIGGER_ICR) revert TriggerOutOfRange(p.triggerIcr);
-        uint256 maxTip = (uint256(p.amount) * MAX_TIP_BPS) / 10_000;
-        if (p.keeperTip > maxTip) revert TipTooHigh(p.keeperTip, maxTip);
-        if (p.deadline <= block.timestamp) revert DeadlineInPast(p.deadline);
-        if (troveManager.getTroveStatus(borrower) != TROVE_ACTIVE) revert TroveNotActive(borrower);
+        _validatePlanInput(borrower, p);
+        uint256 nonce = _acceptAuthorization(kind, borrower, p, signature);
 
-        uint256 nonce = borrowerOperationsSignatures.getNonce(borrower);
-        bytes32 digest = authorizationDigest(kind, borrower, p.amount, nonce, p.deadline);
-        // OZ ECDSA rejects malformed lengths and high-s (malleable) signatures.
-        if (ECDSA.recover(digest, signature) != borrower) revert InvalidAuthorization();
+        // RG-03: a repayment must leave net debt >= minNetDebt, or BorrowerOperations rejects it at execution.
+        if (kind == Kind.Repay) _requireRepayFeasible(borrower, p.amount);
 
         uint256 cost = uint256(p.amount) + p.keeperTip;
         uint256 reserve = kind == Kind.Repay ? musdReserve[borrower] : btcReserve[borrower];
@@ -409,6 +449,67 @@ contract RescueGuard is ReentrancyGuard {
             signature: signature
         });
         emit Armed(borrower, kind, p.amount, p.keeperTip, p.triggerIcr, p.deadline, nonce);
+    }
+
+    function _validatePlanInput(address borrower, PlanInput calldata p) internal view {
+        if (p.amount == 0) revert ZeroAmount();
+        if (p.triggerIcr < MIN_TRIGGER_ICR || p.triggerIcr > MAX_TRIGGER_ICR) revert TriggerOutOfRange(p.triggerIcr);
+        uint256 maxTip = (uint256(p.amount) * MAX_TIP_BPS) / 10_000;
+        if (p.keeperTip > maxTip) revert TipTooHigh(p.keeperTip, maxTip);
+        if (p.deadline <= block.timestamp) revert DeadlineInPast(p.deadline);
+        if (troveManager.getTroveStatus(borrower) != TROVE_ACTIVE) revert TroveNotActive(borrower);
+    }
+
+    /// @dev Verifies the borrower's signature for this exact plan at their current BOS nonce and records it.
+    function _acceptAuthorization(Kind kind, address borrower, PlanInput calldata p, bytes calldata signature)
+        internal
+        returns (uint256 nonce)
+    {
+        nonce = borrowerOperationsSignatures.getNonce(borrower);
+        bytes32 digest = authorizationDigest(kind, borrower, p.amount, nonce, p.deadline);
+        // OZ ECDSA rejects malformed lengths and high-s (malleable) signatures.
+        if (ECDSA.recover(digest, signature) != borrower) revert InvalidAuthorization();
+
+        // RG-02: never hold two live authorizations for the same nonce. Otherwise the replaced (public) one can be
+        // replayed at BorrowerOperationsSignatures to burn the nonce and silently disable the new plan.
+        bytes32 sigHash = keccak256(signature);
+        AuthRecord memory last = _lastAuth[borrower];
+        if (last.noncePlusOne == nonce + 1 && last.sigHash != sigHash && block.timestamp <= last.deadline) {
+            revert OutstandingAuthorization(nonce, last.deadline);
+        }
+        _lastAuth[borrower] = AuthRecord({noncePlusOne: uint64(nonce + 1), deadline: p.deadline, sigHash: sigHash});
+    }
+
+    /// @dev RG-01: runs before any tip is paid. In Recovery Mode BorrowerOperations accepts a repay or top-up at any
+    ///      resulting ICR, but MUSD still liquidates below MCR. A rescue that leaves the trove liquidatable, or a trove
+    ///      that is no longer active, must not consume the reserve.
+    function _checkRescued(address borrower, uint256 price, uint256 icrBefore) internal view returns (uint256 icrAfter) {
+        if (troveManager.getTroveStatus(borrower) != TROVE_ACTIVE) revert TroveNotActive(borrower);
+        icrAfter = troveManager.getCurrentICR(borrower, price);
+        if (icrAfter <= icrBefore) revert RescueDidNotImprove(icrBefore, icrAfter);
+        uint256 mcr = _params().MCR();
+        if (icrAfter < mcr) revert RescueLeavesTroveLiquidatable(icrAfter, mcr);
+    }
+
+    function _params() internal view returns (IBorrowerOperationsParams) {
+        return IBorrowerOperationsParams(borrowerOperationsSignatures.borrowerOperations());
+    }
+
+    function _repayFloor(address borrower, uint256 amount) internal view returns (uint256 debt, uint256 floor) {
+        (, uint256 principal, uint256 interest, , , ) = troveManager.getEntireDebtAndColl(borrower);
+        IBorrowerOperationsParams bo = _params();
+        debt = principal + interest;
+        floor = bo.MUSD_GAS_COMPENSATION() + bo.minNetDebt() + amount;
+    }
+
+    function _repayFeasible(address borrower, uint256 amount) internal view returns (bool) {
+        (uint256 debt, uint256 floor) = _repayFloor(borrower, amount);
+        return debt >= floor;
+    }
+
+    function _requireRepayFeasible(address borrower, uint256 amount) internal view {
+        (uint256 debt, uint256 floor) = _repayFloor(borrower, amount);
+        if (debt < floor) revert PlanBelowMinNetDebt(debt, amount, floor - amount);
     }
 
     function _disarm(address borrower) internal {
