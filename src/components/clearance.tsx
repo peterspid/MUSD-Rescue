@@ -23,6 +23,7 @@ function pos(p: number) {
 export function ClearanceGauge({
   icr,
   simulatedIcr,
+  triggerIcr,
   mcr,
   ccr,
   thresholds = DEFAULT_THRESHOLDS,
@@ -31,6 +32,8 @@ export function ClearanceGauge({
 }: {
   icr: bigint | null;
   simulatedIcr?: bigint | null;
+  /** RescueGuard trigger: the plan runs once the ratio falls below this line. */
+  triggerIcr?: bigint | null;
   mcr: bigint;
   ccr: bigint;
   thresholds?: RiskThresholds;
@@ -48,9 +51,10 @@ export function ClearanceGauge({
   ];
   const cur = pct(icr);
   const sim = simulatedIcr === undefined ? undefined : pct(simulatedIcr);
+  const trig = triggerIcr == null ? null : pct(triggerIcr);
   const left = (p: number) => ({ left: `${pos(p) * 100}%` });
   const span = (a: number, b: number) => ({ left: `${pos(a) * 100}%`, width: `${Math.max(0, pos(b) - pos(a)) * 100}%` });
-  const ariaText = `${label}: current ${cur == null ? "no debt" : formatRatioPct(icr ?? null)}${sim != null ? `, simulated ${formatRatioPct(simulatedIcr ?? null)}` : ""}; liquidation below ${mcrP}%`;
+  const ariaText = `${label}: current ${cur == null ? "no debt" : formatRatioPct(icr ?? null)}${sim != null ? `, simulated ${formatRatioPct(simulatedIcr ?? null)}` : ""}${trig != null ? `, rescue trigger ${formatRatioPct(triggerIcr ?? null)}` : ""}; liquidation below ${mcrP}%`;
   return (
     <div className={cn("relative h-[50px] w-full select-none", className)} role="img" aria-label={ariaText}>
       <div className="absolute inset-x-0 top-[14px] h-[14px] overflow-hidden rounded-[3px] border border-ink bg-paper">
@@ -69,6 +73,10 @@ export function ClearanceGauge({
       <span className="num absolute top-[32px] -translate-x-1/2 text-[12px] text-muted" style={left(ccrP)}>
         {ccrP}%
       </span>
+      {/* RescueGuard trigger */}
+      {trig != null && (
+        <div className="absolute top-[6px] h-[30px] w-[3px] -translate-x-1/2 bg-blue" style={left(Math.min(trig, MAX))} title={`Rescue trigger: ${formatRatioPct(triggerIcr ?? null)}`} />
+      )}
       {/* Current ICR */}
       {cur != null && (
         <div className="absolute top-0 -translate-x-1/2" style={left(Math.min(cur, MAX))}>
