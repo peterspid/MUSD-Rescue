@@ -19,3 +19,6 @@ secret.tmp
 .DS_Store
 npm-debug.log*
 cache/
+
+# local browser-test artifacts
+.playwright-mcp/
