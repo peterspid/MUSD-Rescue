@@ -68,7 +68,7 @@ export function PositionView({ owner, focus }: { owner: string; focus: "details"
       as="h1"
       title={
         <span className="flex flex-wrap items-center gap-3">
-          {focus === "rescue" ? "Rescue simulator" : "Trove"} <span className="num text-[22px] text-fg-2">{shortAddress(p.owner, 6)}</span>
+          {focus === "rescue" ? "Rescue simulator" : "Trove"} <span className="num text-[22px] text-ink-soft">{shortAddress(p.owner, 6)}</span>
           {r && <RiskBadge category={r.category} size="lg" />}
         </span>
       }
@@ -145,7 +145,7 @@ export function PositionView({ owner, focus }: { owner: string; focus: "details"
           <div className="flex flex-col gap-5">
             <div className="flex flex-wrap items-end gap-8">
               <div>
-                <div className="text-[13px] text-fg-3">Health factor (ICR ÷ 110%)</div>
+                <div className="text-[13px] text-muted">Health factor (ICR ÷ 110%)</div>
                 <div className="num text-[52px] leading-none" style={{ color: CATEGORY_COLOR[r.category] }}>{formatHF(r.hf)}</div>
               </div>
               <Stat label="Collateral ratio (ICR)" value={formatRatioPct(r.icr, 2)} sub="getCurrentICR" />
@@ -154,13 +154,13 @@ export function PositionView({ owner, focus }: { owner: string; focus: "details"
             </div>
             <ClearanceGauge icr={r.icr} mcr={params.mcr} ccr={params.ccr} thresholds={session.thresholds} />
             {rec && (
-              <div className={cn("rounded-md border px-4 py-3", rec.tone === "urgent" ? "border-critical/40 bg-critical/10" : rec.tone === "act" ? "border-high/40 bg-high/10" : rec.tone === "watch" ? "border-caution/30 bg-caution/5" : "border-ink-4 bg-ink-1")}>
+              <div className={cn("rounded-md border px-4 py-3", rec.tone === "urgent" ? "border-ink bg-surface" : rec.tone === "act" ? "border-ink bg-surface" : rec.tone === "watch" ? "border-ink bg-surface" : "border-line bg-surface")}>
                 <div className="font-medium">{rec.title}</div>
-                <p className="text-[14px] text-fg-2">{rec.body}</p>
+                <p className="text-[14px] text-ink-soft">{rec.body}</p>
               </div>
             )}
           </div>
-          <div className="grid grid-cols-2 gap-4 text-[13.5px]">
+          <div className="grid grid-cols-2 gap-4 text-[14px]">
             <div className="well col-span-2 p-4 sm:col-span-1">
               <h3 className="font-medium">Collateral</h3>
               <dl className="mt-2 space-y-1.5">
@@ -199,21 +199,21 @@ export function PositionView({ owner, focus }: { owner: string; focus: "details"
       <section className="grid grid-cols-1 gap-5 lg:grid-cols-2">
         <div className="panel p-5">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <h2 className="font-display text-lg font-semibold">BTC oracle price</h2>
+            <h2 className="text-lg font-semibold">BTC oracle price</h2>
             <div className="flex items-center gap-2">
-              <label className="flex items-center gap-1.5 text-[12.5px] text-fg-3">
-                <input type="checkbox" checked={showRef} onChange={(e) => setShowRef(e.target.checked)} className="accent-[var(--color-teal)]" /> External reference
+              <label className="flex items-center gap-1.5 text-[13px] text-muted">
+                <input type="checkbox" checked={showRef} onChange={(e) => setShowRef(e.target.checked)} className="accent-[var(--color-blue)]" /> External reference
               </label>
               <Segmented label="Range" value={range} onChange={setRange} options={[{ value: "24h", label: "24h" }, { value: "7d", label: "7d" }, { value: "30d", label: "30d" }]} />
             </div>
           </div>
           <div className="mt-4">
             {hist.isLoading ? <Skeleton className="h-[220px]" /> : hist.error ? <ErrorState title="History unavailable" error={hist.error} /> : hist.data ? <PriceHistoryChart data={hist.data} range={range} reference={showRef ? ref.data?.prices ?? null : null} /> : null}
-            {showRef && ref.error && <p className="mt-2 text-[12.5px] text-caution">External reference unavailable right now.</p>}
+            {showRef && ref.error && <p className="mt-2 text-[13px] text-ink">External reference unavailable right now.</p>}
           </div>
         </div>
         <div className="panel p-5">
-          <h2 className="font-display text-lg font-semibold">Health factor history</h2>
+          <h2 className="text-lg font-semibold">Health factor history</h2>
           <div className="mt-4">{hist.isLoading ? <Skeleton className="h-[200px]" /> : hist.data ? <HealthHistoryChart data={hist.data} range={range} mcr={params.mcr} /> : null}</div>
         </div>
       </section>
@@ -230,36 +230,36 @@ export function PositionView({ owner, focus }: { owner: string; focus: "details"
       <section className="grid grid-cols-1 gap-5 lg:grid-cols-[1.2fr_1fr]">
         <div className="panel p-5">
           <div className="flex items-center justify-between">
-            <h2 className="font-display text-lg font-semibold">Recent on-chain activity</h2>
+            <h2 className="text-lg font-semibold">Recent on-chain activity</h2>
             <SourceTag kind="onchain" />
           </div>
           {events.isLoading && <Skeleton className="mt-4 h-24" />}
-          {events.error && <p className="mt-3 text-[13.5px] text-caution">Explorer log API unavailable: {(events.error as Error).message}</p>}
-          {events.data && events.data.events.length === 0 && <p className="mt-3 text-[13.5px] text-fg-3">No trove events found.</p>}
-          <ol className="mt-3 divide-y divide-ink-4">
+          {events.error && <p className="mt-3 text-[14px] text-ink">Explorer log API unavailable: {(events.error as Error).message}</p>}
+          {events.data && events.data.events.length === 0 && <p className="mt-3 text-[14px] text-muted">No trove events found.</p>}
+          <ol className="mt-3 divide-y divide-line">
             {events.data?.events.slice(0, 12).map((e) => (
-              <li key={e.txHash + e.operation} className="flex flex-wrap items-center gap-x-4 gap-y-1 py-2.5 text-[13.5px]">
+              <li key={e.txHash + e.operation} className="flex flex-wrap items-center gap-x-4 gap-y-1 py-2.5 text-[14px]">
                 <span className="min-w-[180px] font-medium">{e.operation}</span>
-                <span className="num text-fg-3">{e.timestamp ? new Date(e.timestamp * 1000).toLocaleString() : `block ${e.blockNumber}`}</span>
-                <span className="num text-fg-2">
+                <span className="num text-muted">{e.timestamp ? new Date(e.timestamp * 1000).toLocaleString() : `block ${e.blockNumber}`}</span>
+                <span className="num text-ink-soft">
                   {formatBtc(BigInt(e.coll))} BTC, {formatAmount(BigInt(e.principal) + BigInt(e.interest))} MUSD
                 </span>
                 <ExplorerLink hash={e.txHash} className="ml-auto" />
               </li>
             ))}
           </ol>
-          <p className="mt-2 text-[12px] text-fg-3">{events.data?.source}</p>
+          <p className="mt-2 text-[12px] text-muted">{events.data?.source}</p>
         </div>
         <div className="panel p-5">
-          <h2 className="font-display text-lg font-semibold">Alerts for this trove</h2>
-          <p className="mt-1 text-[13px] text-fg-3">Checked once a day by a scheduled job, on every visit, and when you press Check now. Not continuous.</p>
+          <h2 className="text-lg font-semibold">Alerts for this trove</h2>
+          <p className="mt-1 text-[13px] text-muted">Checked once a day by a scheduled job, on every visit, and when you press Check now. Not continuous.</p>
           <div className="mt-4">
             <AlertRules owner={p.owner} compact />
           </div>
         </div>
       </section>
 
-      <p className="text-[12.5px] text-fg-3">
+      <p className="text-[13px] text-muted">
         Data source: TroveManager.getEntireDebtAndColl, Troves and PriceFeed.fetchPrice via Multicall3 on Mezo Testnet, block {Number(p.system.blockNumber).toLocaleString("en-US")} (chain time {new Date(p.system.blockTime * 1000).toLocaleString()}). Owner <span className="num">{p.owner}</span> <CopyButton value={p.owner} />
       </p>
     </div>
@@ -268,9 +268,9 @@ export function PositionView({ owner, focus }: { owner: string; focus: "details"
 
 function Row({ k, v, strong }: { k: string; v: string; strong?: boolean }) {
   return (
-    <div className={cn("flex justify-between gap-3", strong && "border-t border-ink-4 pt-1.5 font-medium")}>
-      <dt className="text-fg-3">{k}</dt>
-      <dd className="num text-fg">{v}</dd>
+    <div className={cn("flex justify-between gap-3", strong && "border-t border-line pt-1.5 font-medium")}>
+      <dt className="text-muted">{k}</dt>
+      <dd className="num text-ink">{v}</dd>
     </div>
   );
 }

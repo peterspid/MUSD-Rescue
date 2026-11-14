@@ -168,18 +168,18 @@ export function RescueDialog({ flow, onClose }: { flow: ReturnType<typeof useRes
   return (
     <Dialog.Root open={open} onOpenChange={(o) => !o && canClose && onClose()}>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-50 bg-ink-0/75 backdrop-blur-sm" />
+        <Dialog.Overlay className="fixed inset-0 z-50 bg-paper " />
         <Dialog.Content
           className="panel fixed left-1/2 top-1/2 z-50 max-h-[92dvh] w-[min(620px,calc(100vw-24px))] -translate-x-1/2 -translate-y-1/2 overflow-y-auto p-5 sm:p-6"
           onEscapeKeyDown={(e) => !canClose && e.preventDefault()}
           onPointerDownOutside={(e) => e.preventDefault()}
         >
           <div className="flex items-start justify-between gap-3">
-            <Dialog.Title className="font-display text-xl font-semibold">
+            <Dialog.Title className="text-xl font-semibold">
               {state.s === "review" ? "Confirm rescue transaction" : state.s === "verified" ? "Rescue verified" : "Rescue transaction"}
             </Dialog.Title>
             {canClose && (
-              <Dialog.Close className="rounded p-1 text-fg-3 hover:text-fg" aria-label="Close">
+              <Dialog.Close className="rounded p-1 text-muted hover:text-ink" aria-label="Close">
                 <X className="size-5" />
               </Dialog.Close>
             )}
@@ -189,80 +189,80 @@ export function RescueDialog({ flow, onClose }: { flow: ReturnType<typeof useRes
           {p && (state.s === "review" || state.s === "awaiting-signature") && (
             <div className="mt-4 flex flex-col gap-4">
               {worsened?.worsened && (
-                <div role="alert" className="flex gap-2 rounded-md border border-critical/50 bg-critical/10 px-3 py-2.5 text-[13.5px]">
-                  <ShieldAlert className="mt-0.5 size-4 shrink-0 text-critical" />
+                <div role="alert" className="flex gap-2 rounded-md border border-ink bg-surface px-3 py-2.5 text-[14px]">
+                  <ShieldAlert className="mt-0.5 size-4 shrink-0 text-ink" />
                   <span>
                     Your position got riskier since you opened the simulator (collateral ratio {formatRatioPct(BigInt(state.tx.icrBefore!))}, change {Number(worsened.deltaBps) / 100}%). The amounts below were re-checked at the latest block.
                   </span>
                 </div>
               )}
               <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-[14px]">
-                <dt className="text-fg-3">Network</dt>
+                <dt className="text-muted">Network</dt>
                 <dd>
-                  {p.network.name} <span className="num text-fg-3">(chain {p.network.chainId})</span>
+                  {p.network.name} <span className="num text-muted">(chain {p.network.chainId})</span>
                 </dd>
-                <dt className="text-fg-3">Contract</dt>
+                <dt className="text-muted">Contract</dt>
                 <dd>
                   {p.contract.name} <ExplorerLink address={p.contract.address}>{shortAddress(p.contract.address, 6)}</ExplorerLink>
                 </dd>
-                <dt className="text-fg-3">Function</dt>
+                <dt className="text-muted">Function</dt>
                 <dd className="num">{p.functionName}()</dd>
                 {repay > 0n && (
                   <>
-                    <dt className="text-fg-3">Repay</dt>
+                    <dt className="text-muted">Repay</dt>
                     <dd className="num">
-                      {formatAmount(repay, 6)} MUSD <span className="text-fg-3">burned from your wallet</span>
+                      {formatAmount(repay, 6)} MUSD <span className="text-muted">burned from your wallet</span>
                     </dd>
                   </>
                 )}
                 {coll > 0n && (
                   <>
-                    <dt className="text-fg-3">Deposit</dt>
+                    <dt className="text-muted">Deposit</dt>
                     <dd className="num">
-                      {formatBtc(coll)} BTC <span className="text-fg-3">sent as collateral</span>
+                      {formatBtc(coll)} BTC <span className="text-muted">sent as collateral</span>
                     </dd>
                   </>
                 )}
-                <dt className="text-fg-3">Approval</dt>
-                <dd className="text-[13px] text-fg-2">{p.approval.explanation}</dd>
-                <dt className="text-fg-3">Gas</dt>
+                <dt className="text-muted">Approval</dt>
+                <dd className="text-[13px] text-ink-soft">{p.approval.explanation}</dd>
+                <dt className="text-muted">Gas</dt>
                 <dd className="num text-[13px]">
                   limit {Number(p.gas.limit).toLocaleString("en-US")}
                   {p.gas.floorApplied ? " (safety floor)" : ""}, max fee ≈ {formatBtc(BigInt(p.gas.maxFeeWei))} BTC
                 </dd>
-                <dt className="text-fg-3">Checked at</dt>
+                <dt className="text-muted">Checked at</dt>
                 <dd className="num text-[13px]">
                   block {Number(p.blockNumber).toLocaleString("en-US")}, oracle ${formatAmount(BigInt(p.price))}; eth_call simulation passed
                 </dd>
               </dl>
-              <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 rounded-[var(--radius-control)] border border-ink-4 bg-ink-1 p-4">
+              <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 rounded-[var(--radius-control)] border border-line bg-surface p-4">
                 <div>
-                  <div className="text-[12px] text-fg-3">Before</div>
+                  <div className="text-[12px] text-muted">Before</div>
                   <div className="num text-xl">{formatRatioPct(p.before.icr ? BigInt(p.before.icr) : null)}</div>
-                  <div className="mt-1 flex items-center gap-2 text-[12.5px] text-fg-3">
+                  <div className="mt-1 flex items-center gap-2 text-[13px] text-muted">
                     HF <span className="num">{formatHF(p.before.hf ? BigInt(p.before.hf) : null)}</span> <RiskBadge category={p.before.category} size="sm" />
                   </div>
                 </div>
-                <ArrowRight className="size-5 text-fg-3" />
+                <ArrowRight className="size-5 text-muted" />
                 <div>
-                  <div className="text-[12px] text-fg-3">Expected after</div>
+                  <div className="text-[12px] text-muted">Expected after</div>
                   <div className="num simulated text-xl">{formatRatioPct(p.after.icr ? BigInt(p.after.icr) : null)}</div>
-                  <div className="mt-1 flex items-center gap-2 text-[12.5px] text-fg-3">
+                  <div className="mt-1 flex items-center gap-2 text-[13px] text-muted">
                     HF <span className="num">{formatHF(p.after.hf ? BigInt(p.after.hf) : null)}</span> <RiskBadge category={p.after.category} size="sm" />
                   </div>
                 </div>
               </div>
               {p.checks.filter((c) => c.level === "warn").map((c) => (
-                <p key={c.id} className="flex gap-2 text-[13px] text-caution">
+                <p key={c.id} className="flex gap-2 text-[13px] text-ink">
                   <TriangleAlert className="mt-0.5 size-4 shrink-0" /> {c.message}
                 </p>
               ))}
-              <p className="text-[12.5px] text-fg-3">
+              <p className="text-[13px] text-muted">
                 Expected values assume the price stays at the checked oracle price. Interest accrues every second and the oracle updates every block, so the final result can differ slightly. MUSD Rescue cannot guarantee that liquidation will be prevented.
               </p>
               <div className="flex flex-wrap items-center justify-end gap-2">
                 {secondsLeft != null && (
-                  <span className={cn("num mr-auto flex items-center gap-1 text-[12.5px]", secondsLeft < 15 ? "text-caution" : "text-fg-3")}>
+                  <span className={cn("num mr-auto flex items-center gap-1 text-[13px]", secondsLeft < 15 ? "text-ink" : "text-muted")}>
                     <Clock className="size-3.5" /> quote valid {secondsLeft}s
                   </span>
                 )}
@@ -279,33 +279,33 @@ export function RescueDialog({ flow, onClose }: { flow: ReturnType<typeof useRes
           {(state.s === "pending" || state.s === "confirmed" || state.s === "verification-delayed") && (
             <div className="mt-5 flex flex-col gap-3">
               <div className="flex items-center gap-3">
-                {state.s === "verification-delayed" ? <TriangleAlert className="size-6 text-caution" /> : <LoaderCircle className="size-6 animate-spin text-teal" />}
+                {state.s === "verification-delayed" ? <TriangleAlert className="size-6 text-ink" /> : <LoaderCircle className="size-6 animate-spin text-blue" />}
                 <div>
                   <div className="font-medium">
                     {state.s === "pending" ? "Pending — waiting for the receipt" : state.s === "confirmed" ? "Receipt confirmed — verifying and refreshing your trove" : "Verification delayed"}
                   </div>
-                  <div className="text-[13px] text-fg-3">{state.s === "verification-delayed" ? state.message : "Do not resubmit. Mezo blocks take about 4 seconds."}</div>
+                  <div className="text-[13px] text-muted">{state.s === "verification-delayed" ? state.message : "Do not resubmit. Mezo blocks take about 4 seconds."}</div>
                 </div>
               </div>
               <ExplorerLink hash={state.hash}>View transaction on the Mezo explorer</ExplorerLink>
-              {state.s === "pending" && state.walletDisconnected && <p className="text-[13px] text-caution">Wallet disconnected — the transaction was already broadcast, tracking continues.</p>}
+              {state.s === "pending" && state.walletDisconnected && <p className="text-[13px] text-ink">Wallet disconnected — the transaction was already broadcast, tracking continues.</p>}
             </div>
           )}
 
           {state.s === "verified" && (
             <div className="mt-5 flex flex-col gap-3">
               <div className="flex items-center gap-3">
-                <CircleCheck className="size-7 text-safe" />
+                <CircleCheck className="size-7 text-blue" />
                 <div>
                   <div className="font-medium">Confirmed on-chain and re-read from the protocol</div>
-                  <div className="text-[13px] text-fg-3">{result?.recorded ? "Verified by the server from the receipt and saved to your activity log." : "Sign in to keep a verified history of your rescues."}</div>
+                  <div className="text-[13px] text-muted">{result?.recorded ? "Verified by the server from the receipt and saved to your activity log." : "Sign in to keep a verified history of your rescues."}</div>
                 </div>
               </div>
               {result && (
-                <div className="rounded-[var(--radius-control)] border border-safe/40 bg-safe/5 p-4 text-[14px]">
+                <div className="rounded-[var(--radius-control)] border border-blue bg-blue-tint p-4 text-[14px]">
                   Collateral ratio <span className="num">{formatRatioPct(result.icrBefore ? BigInt(result.icrBefore) : null)}</span> →{" "}
-                  <span className="num text-safe">{formatRatioPct(result.icrAfter ? BigInt(result.icrAfter) : null)}</span>
-                  {result.recorded && <span className="text-fg-3"> (both measured at the same oracle price, block {state.blockNumber})</span>}
+                  <span className="num text-blue">{formatRatioPct(result.icrAfter ? BigInt(result.icrAfter) : null)}</span>
+                  {result.recorded && <span className="text-muted"> (both measured at the same oracle price, block {state.blockNumber})</span>}
                 </div>
               )}
               <ExplorerLink hash={state.hash}>View transaction on the Mezo explorer</ExplorerLink>
@@ -318,12 +318,12 @@ export function RescueDialog({ flow, onClose }: { flow: ReturnType<typeof useRes
           {(state.s === "rejected" || state.s === "failed" || state.s === "reverted" || state.s === "disconnected" || state.s === "blocked" || state.s === "approval-rejected") && (
             <div className="mt-5 flex flex-col gap-3">
               <div className="flex items-start gap-3">
-                <CircleX className="size-7 shrink-0 text-critical" />
+                <CircleX className="size-7 shrink-0 text-ink" />
                 <div>
                   <div className="font-medium">
                     {state.s === "rejected" ? "Rejected in wallet" : state.s === "reverted" ? "Transaction reverted" : state.s === "disconnected" ? "Wallet disconnected" : state.s === "blocked" ? "Wrong network" : state.s === "approval-rejected" ? "Approval rejected" : "Could not complete"}
                   </div>
-                  <p className="text-[13.5px] text-fg-2">
+                  <p className="text-[14px] text-ink-soft">
                     {"message" in state ? state.message : state.s === "disconnected" ? "Nothing was sent. Reconnect your wallet to try again." : ""}
                   </p>
                 </div>

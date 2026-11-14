@@ -112,33 +112,33 @@ export function Simulator(props: SimulatorProps) {
       {/* ---------------- Scenario ---------------- */}
       <section className={cn("panel p-5 sm:p-6", fictional && "fictional")} aria-labelledby="scenario-h">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2 id="scenario-h" className="font-display text-xl font-semibold">
+          <h2 id="scenario-h" className="text-xl font-semibold">
             Price scenario
           </h2>
           <SourceTag kind={fictional ? "fictional" : "simulated"} />
         </div>
-        <p className="mt-1 text-[13.5px] text-fg-2">Hypothetical BTC moves, not predictions. {fictional ? "Base price is fictional." : "Starts from the live on-chain oracle price."}</p>
+        <p className="mt-1 text-[14px] text-ink-soft">Hypothetical BTC moves, not predictions. {fictional ? "Base price is fictional." : "Starts from the live on-chain oracle price."}</p>
         <div className="mt-4 flex flex-wrap gap-1.5" role="group" aria-label="Price change presets">
           {PRESETS.map((b) => (
             <button
               key={b}
               onClick={() => setChangeBps(b)}
               aria-pressed={changeBps === b}
-              className={cn("num rounded-md border px-3 py-1.5 text-[13px]", changeBps === b ? "border-teal bg-teal/15 text-fg" : "border-ink-4 text-fg-2 hover:text-fg")}
+              className={cn("num rounded-md border px-3 py-1.5 text-[13px]", changeBps === b ? "border-blue bg-blue-tint text-ink" : "border-line text-ink-soft hover:text-ink")}
             >
               {b === 0 ? "No change" : `${b / 100}%`}
             </button>
           ))}
         </div>
         <div className="mt-4">
-          <label htmlFor="price-scrub" className="flex items-baseline justify-between text-[13px] text-fg-3">
+          <label htmlFor="price-scrub" className="flex items-baseline justify-between text-[13px] text-muted">
             <span>Drag BTC price</span>
-            <span className="num text-fg">
-              {formatUsd(price, 0)} <span className={changeBps < 0 ? "text-critical" : changeBps > 0 ? "text-safe" : "text-fg-3"}>({formatBps(changeBps, 1, true)})</span>
+            <span className="num text-ink">
+              {formatUsd(price, 0)} <span className={changeBps < 0 ? "text-ink" : changeBps > 0 ? "text-blue" : "text-muted"}>({formatBps(changeBps, 1, true)})</span>
             </span>
           </label>
           <input id="price-scrub" type="range" className="scrub mt-1" min={-7000} max={5000} step={50} value={changeBps} onChange={(e) => setChangeBps(Number(e.target.value))} aria-valuetext={`${changeBps / 100}% change, ${formatUsd(price, 0)}`} />
-          <div className="num flex justify-between text-[11px] text-fg-3">
+          <div className="num flex justify-between text-[12px] text-muted">
             <span>−70%</span>
             <span>0</span>
             <span>+50%</span>
@@ -147,7 +147,7 @@ export function Simulator(props: SimulatorProps) {
 
         <div className="mt-5 flex items-center gap-3">
           <RiskBadge category={scen.category} size="lg" />
-          {scen.category === "liquidatable" && <span className="text-[13px] text-critical">At this price anyone could liquidate the trove.</span>}
+          {scen.category === "liquidatable" && <span className="text-[13px] text-ink">At this price anyone could liquidate the trove.</span>}
         </div>
         <ClearanceGauge className="mt-4" icr={scen.icr} simulatedIcr={hasInput && sim.after ? sim.after.icr : undefined} mcr={params.mcr} ccr={params.ccr} thresholds={thresholds} />
         <dl className="mt-6 grid grid-cols-2 gap-x-4 gap-y-4 sm:grid-cols-3">
@@ -159,23 +159,23 @@ export function Simulator(props: SimulatorProps) {
           <Stat label="Debt" value={formatAmount(p.debt)} sub={`+${formatAmount(perDay, 3)} MUSD/day interest`} />
         </dl>
         {sysAt.recoveryMode && (
-          <p className="mt-4 rounded-md border border-caution/40 bg-caution/10 px-3 py-2 text-[13px] text-caution">
+          <p className="mt-4 rounded-md border border-ink bg-surface px-3 py-2 text-[13px] text-ink">
             At this price the {fictional ? "fictional " : ""}system TCR ({formatRatioPct(sysAt.tcr)}) is below 150%: Recovery Mode. MUSD still liquidates only below 110% ICR, but borrowing needs ICR ≥ 150%, the borrowing fee is waived, and closing troves is blocked.
           </p>
         )}
 
-        <details className="mt-5 rounded-md border border-ink-4 bg-ink-1 px-3 py-2">
-          <summary className="cursor-pointer text-[13.5px] text-fg-2">What if I borrowed more? (calculator only)</summary>
+        <details className="mt-5 rounded-md border border-line bg-surface px-3 py-2">
+          <summary className="cursor-pointer text-[14px] text-ink-soft">What if I borrowed more? (calculator only)</summary>
           <div className="mt-3">
             <Field label="Extra MUSD borrowed" hint="MUSD Rescue never prepares borrowing transactions. This shows how new debt (plus the 0.1% fee) would move your risk." htmlFor="borrow">
               <input id="borrow" inputMode="decimal" className={inputCls} value={borrowStr} onChange={(e) => setBorrowStr(e.target.value)} placeholder="0.00" />
             </Field>
-            {borrow && !borrow.ok && <p className="mt-1 text-[12.5px] text-critical">{borrow.error}</p>}
+            {borrow && !borrow.ok && <p className="mt-1 text-[13px] text-ink">{borrow.error}</p>}
             {borrowSim?.after && (
-              <p className="mt-2 text-[13.5px] text-fg-2">
-                Health factor would fall to <span className="num simulated text-fg">{formatHF(borrowSim.after.hf)}</span> ({formatRatioPct(borrowSim.after.icr)}), fee {formatAmount(borrowSim.borrowingFee)} MUSD.
+              <p className="mt-2 text-[14px] text-ink-soft">
+                Health factor would fall to <span className="num simulated text-ink">{formatHF(borrowSim.after.hf)}</span> ({formatRatioPct(borrowSim.after.icr)}), fee {formatAmount(borrowSim.borrowingFee)} MUSD.
                 {borrowSim.checks.filter((c) => c.level === "block").map((c) => (
-                  <span key={c.id} className="mt-1 block text-critical">{c.message}</span>
+                  <span key={c.id} className="mt-1 block text-ink">{c.message}</span>
                 ))}
               </p>
             )}
@@ -186,7 +186,7 @@ export function Simulator(props: SimulatorProps) {
       {/* ---------------- Rescue simulator ---------------- */}
       <section className={cn("panel p-5 sm:p-6", fictional && "fictional")} aria-labelledby="rescue-h">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2 id="rescue-h" className="font-display text-xl font-semibold">
+          <h2 id="rescue-h" className="text-xl font-semibold">
             Rescue simulator
           </h2>
           <Segmented<Tab>
@@ -200,7 +200,7 @@ export function Simulator(props: SimulatorProps) {
             ]}
           />
         </div>
-        <p className="mt-1 text-[13.5px] text-fg-2">
+        <p className="mt-1 text-[14px] text-ink-soft">
           Validated against the same rules BorrowerOperations enforces: 110% minimum ratio, the {formatAmount(params.minNetDebt, 0)} MUSD minimum net debt, wallet balances.
         </p>
 
@@ -212,10 +212,10 @@ export function Simulator(props: SimulatorProps) {
               error={repay && !repay.ok ? repay.error : null}
               hint={
                 <>
-                  Max without closing: <button className="num text-teal hover:underline" onClick={() => setRepayStr(toInputString(sim.maxRepay))}>{formatAmount(sim.maxRepay)}</button>
+                  Max without closing: <button className="num text-blue hover:underline" onClick={() => setRepayStr(toInputString(sim.maxRepay))}>{formatAmount(sim.maxRepay)}</button>
                   {wallet?.musd !== undefined && (
                     <>
-                      {" "}| Wallet: <button className="num text-teal hover:underline" onClick={() => setRepayStr(toInputString(wallet.musd! < sim.maxRepay ? wallet.musd! : sim.maxRepay))}>{formatAmount(wallet.musd)}</button>
+                      {" "}| Wallet: <button className="num text-blue hover:underline" onClick={() => setRepayStr(toInputString(wallet.musd! < sim.maxRepay ? wallet.musd! : sim.maxRepay))}>{formatAmount(wallet.musd)}</button>
                     </>
                   )}
                 </>
@@ -237,41 +237,41 @@ export function Simulator(props: SimulatorProps) {
         </div>
 
         {/* Before → after */}
-        <div className="mt-5 grid grid-cols-[1fr_auto_1fr] items-center gap-3 rounded-[var(--radius-control)] border border-ink-4 bg-ink-1 p-4">
+        <div className="mt-5 grid grid-cols-[1fr_auto_1fr] items-center gap-3 rounded-[var(--radius-control)] border border-line bg-surface p-4">
           <div>
-            <div className="text-[12px] text-fg-3">{scenarioDiffers ? "At scenario price" : "Current"}</div>
+            <div className="text-[12px] text-muted">{scenarioDiffers ? "At scenario price" : "Current"}</div>
             <div className="num text-2xl" style={{ color: CATEGORY_COLOR[scen.category] }}>{formatHF(scen.hf)}</div>
-            <div className="num text-[12.5px] text-fg-3">ICR {formatRatioPct(scen.icr)}</div>
+            <div className="num text-[13px] text-muted">ICR {formatRatioPct(scen.icr)}</div>
           </div>
-          <ArrowRight className="size-5 text-fg-3" aria-hidden />
+          <ArrowRight className="size-5 text-muted" aria-hidden />
           <div>
-            <div className="text-[12px] text-fg-3">After rescue</div>
+            <div className="text-[12px] text-muted">After rescue</div>
             <div className="num simulated text-2xl" style={{ color: hasInput && sim.after ? CATEGORY_COLOR[sim.after.category] : undefined }}>
               {hasInput && sim.after ? formatHF(sim.after.hf) : "—"}
             </div>
-            <div className="num text-[12.5px] text-fg-3">ICR {hasInput && sim.after ? formatRatioPct(sim.after.icr) : "—"}</div>
+            <div className="num text-[13px] text-muted">ICR {hasInput && sim.after ? formatRatioPct(sim.after.icr) : "—"}</div>
           </div>
         </div>
         {hasInput && sim.after && sim.newPosition && (
           <dl className="mt-3 grid grid-cols-2 gap-3 text-[13px] sm:grid-cols-4">
-            <div><dt className="text-fg-3">Debt after</dt><dd className="num simulated">{formatAmount(sim.newPosition.debt)}</dd></div>
-            <div><dt className="text-fg-3">Collateral after</dt><dd className="num simulated">{formatBtc(sim.newPosition.coll)}</dd></div>
-            <div><dt className="text-fg-3">Liquidation price</dt><dd className="num simulated">{formatUsd(sim.after.liquidationPrice, 0)}</dd></div>
-            <div><dt className="text-fg-3">Paid to interest</dt><dd className="num">{formatAmount(sim.interestPaid, 4)}</dd></div>
+            <div><dt className="text-muted">Debt after</dt><dd className="num simulated">{formatAmount(sim.newPosition.debt)}</dd></div>
+            <div><dt className="text-muted">Collateral after</dt><dd className="num simulated">{formatBtc(sim.newPosition.coll)}</dd></div>
+            <div><dt className="text-muted">Liquidation price</dt><dd className="num simulated">{formatUsd(sim.after.liquidationPrice, 0)}</dd></div>
+            <div><dt className="text-muted">Paid to interest</dt><dd className="num">{formatAmount(sim.interestPaid, 4)}</dd></div>
           </dl>
         )}
 
         {(blocks.length > 0 || warns.length > 0) && hasInput && (
           <ul className="mt-4 flex flex-col gap-1.5">
             {blocks.map((c) => (
-              <li key={c.id} className="flex gap-2 rounded-md border border-critical/40 bg-critical/10 px-3 py-2 text-[13px] text-fg">
-                <OctagonAlert className="mt-0.5 size-4 shrink-0 text-critical" aria-hidden />
+              <li key={c.id} className="flex gap-2 rounded-md border border-ink bg-surface px-3 py-2 text-[13px] text-ink">
+                <OctagonAlert className="mt-0.5 size-4 shrink-0 text-ink" aria-hidden />
                 <span><span className="sr-only">Blocked: </span>{c.message}</span>
               </li>
             ))}
             {warns.map((c) => (
-              <li key={c.id} className="flex gap-2 rounded-md border border-caution/30 bg-caution/5 px-3 py-2 text-[13px] text-fg-2">
-                <TriangleAlert className="mt-0.5 size-4 shrink-0 text-caution" aria-hidden />
+              <li key={c.id} className="flex gap-2 rounded-md border border-ink bg-surface px-3 py-2 text-[13px] text-ink-soft">
+                <TriangleAlert className="mt-0.5 size-4 shrink-0 text-ink" aria-hidden />
                 <span>{c.message}</span>
               </li>
             ))}
@@ -279,21 +279,21 @@ export function Simulator(props: SimulatorProps) {
         )}
 
         {/* Target solver */}
-        <div className="mt-6 border-t border-ink-4 pt-5">
+        <div className="mt-6 border-t border-line pt-5">
           <div className="flex flex-wrap items-end gap-3">
             <Field label="Target health factor" htmlFor="target" error={!targetValid ? "Enter a value between 1.01 and 10" : null}>
               <input id="target" inputMode="decimal" className={cn(inputCls, "w-32")} value={targetStr} onChange={(e) => setTargetStr(e.target.value)} />
             </Field>
-            <p className="pb-2 text-[13px] text-fg-3">
+            <p className="pb-2 text-[13px] text-muted">
               <Target className="mr-1 inline size-3.5" />= ICR <span className="num">{targetICR ? formatRatioPct(targetICR) : "—"}</span> at {scenarioDiffers ? "the scenario" : "the current"} price
             </p>
           </div>
           {targetICR && rSol && cSol && (
             <div className="mt-4 overflow-x-auto">
-              <table className="w-full min-w-[520px] text-left text-[13.5px]">
+              <table className="w-full min-w-[520px] text-left text-[14px]">
                 <caption className="sr-only">Ways to reach the target health factor</caption>
                 <thead>
-                  <tr className="text-[12px] text-fg-3">
+                  <tr className="text-[12px] text-muted">
                     <th className="pb-2 font-normal">Option</th>
                     <th className="pb-2 font-normal">Amount</th>
                     <th className="pb-2 font-normal">Cost (USD)</th>
@@ -303,20 +303,20 @@ export function Simulator(props: SimulatorProps) {
                 </thead>
                 <tbody>
                   {options.map((o) => (
-                    <tr key={o.id} className="border-t border-ink-4 align-top">
+                    <tr key={o.id} className="border-t border-line align-top">
                       <td className="py-2.5 pr-3">
-                        <div className="font-medium text-fg">{o.label}</div>
-                        <div className="max-w-[34ch] text-[12.5px] text-fg-3">{o.tradeoff}</div>
+                        <div className="font-medium text-ink">{o.label}</div>
+                        <div className="max-w-[34ch] text-[13px] text-muted">{o.tradeoff}</div>
                       </td>
                       <td className="num py-2.5 pr-3">
                         {o.repay > 0n && <div>{formatAmount(o.repay)} MUSD</div>}
                         {o.addColl > 0n && <div>{formatBtc(o.addColl)} BTC</div>}
-                        {o.repay === 0n && o.addColl === 0n && <div className="text-fg-3">nothing</div>}
+                        {o.repay === 0n && o.addColl === 0n && <div className="text-muted">nothing</div>}
                       </td>
                       <td className="num py-2.5 pr-3">{formatUsd(o.usdCommitted)}</td>
                       <td className="num py-2.5 pr-3">
-                        <span className={cn(!o.feasible && "text-caution")}>{formatHF(o.hfAfter)}</span>
-                        {!o.feasible && <div className="max-w-[24ch] text-[12px] text-caution">{o.note}</div>}
+                        <span className={cn(!o.feasible && "text-ink")}>{formatHF(o.hfAfter)}</span>
+                        {!o.feasible && <div className="max-w-[24ch] text-[12px] text-ink">{o.note}</div>}
                       </td>
                       <td className="py-2.5">
                         <Button
@@ -335,7 +335,7 @@ export function Simulator(props: SimulatorProps) {
                   ))}
                 </tbody>
               </table>
-              <p className="mt-2 flex gap-1.5 text-[12.5px] text-fg-3">
+              <p className="mt-2 flex gap-1.5 text-[13px] text-muted">
                 <Info className="mt-0.5 size-3.5 shrink-0" />
                 No option is picked for you. Prices, accrued interest, oracle updates and transaction timing can change the result; amounts are rounded up to reach the target.
               </p>
@@ -344,10 +344,10 @@ export function Simulator(props: SimulatorProps) {
         </div>
 
         {/* Execution */}
-        <div className="mt-6 border-t border-ink-4 pt-5">
+        <div className="mt-6 border-t border-line pt-5">
           {fictional ? (
-            <div className="flex items-start gap-2 rounded-md border border-fiction/40 bg-fiction/10 px-3 py-2.5 text-[13.5px] text-fg-2">
-              <Lock className="mt-0.5 size-4 shrink-0 text-fiction" />
+            <div className="flex items-start gap-2 rounded-md border border-ink bg-paper px-3 py-2.5 text-[14px] text-ink-soft">
+              <Lock className="mt-0.5 size-4 shrink-0 text-ink-soft" />
               Fictional position: simulations here are never sent on-chain. Connect a wallet with a real MUSD trove to rescue it.
             </div>
           ) : (
@@ -361,7 +361,7 @@ export function Simulator(props: SimulatorProps) {
               >
                 Review transaction
               </Button>
-              <p className="max-w-[52ch] text-[13px] text-fg-3">
+              <p className="max-w-[52ch] text-[13px] text-muted">
                 {!props.gate?.allowed
                   ? props.gate?.reason
                   : scenarioDiffers

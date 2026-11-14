@@ -1,25 +1,38 @@
 import { ImageResponse } from "next/og";
 
-export const alt = "MUSD Rescue: know your risk, rescue your position";
+export const alt = "MUSD Rescue: see how far BTC can fall before your trove is liquidated";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
+const at = (p: number) => ((p - 100) / 150) * 960;
+
 export default function OG() {
+  const ticks = [100, 110, 150, 200, 250];
   return new ImageResponse(
     (
-      <div style={{ width: "100%", height: "100%", display: "flex", background: "#101316", color: "#e8ecef", padding: 72, fontFamily: "sans-serif" }}>
-        <div style={{ display: "flex", flexDirection: "column", justifyContent: "space-between", width: 640 }}>
-          <div style={{ display: "flex", fontSize: 30, color: "#4fc6bf" }}>MUSD Rescue</div>
-          <div style={{ display: "flex", flexDirection: "column", fontSize: 76, fontWeight: 700, lineHeight: 1.02 }}>
-            <span>Know your risk.</span>
-            <span>Rescue your position.</span>
+      <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between", background: "#ffffff", color: "#000000", padding: "64px 120px", fontFamily: "sans-serif" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 16, fontSize: 30, fontWeight: 600 }}>
+          <div style={{ width: 44, height: 44, background: "#1e40ff", borderRadius: 8, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 6 }}>
+            <div style={{ width: 16, height: 16, borderRadius: 8, background: "#ffffff" }} />
+            <div style={{ width: 26, height: 4, background: "#ffffff" }} />
           </div>
-          <div style={{ display: "flex", fontSize: 26, color: "#a9b3bb" }}>Liquidation prevention for Mezo MUSD troves</div>
+          MUSD Rescue
         </div>
-        <div style={{ display: "flex", flex: 1, alignItems: "center", justifyContent: "center", position: "relative" }}>
-          <div style={{ position: "absolute", bottom: 120, width: 380, height: 90, borderRadius: "50%", background: "radial-gradient(closest-side, rgba(240,84,79,0.55), rgba(240,84,79,0))" }} />
-          <div style={{ position: "absolute", bottom: 150, width: 300, height: 4, background: "#f0544f" }} />
-          <div style={{ position: "absolute", top: 120, width: 170, height: 170, borderRadius: "50%", background: "radial-gradient(circle at 35% 30%, #c8fff8, #4fc6bf 45%, #1f6f6b)" }} />
+        <div style={{ display: "flex", flexDirection: "column", fontSize: 64, fontWeight: 700, lineHeight: 1.05, letterSpacing: -2 }}>
+          <span>See how far BTC can fall</span>
+          <span>before your trove is liquidated.</span>
+        </div>
+        <div style={{ display: "flex", position: "relative", width: 960, height: 120 }}>
+          <div style={{ position: "absolute", left: 0, top: 20, width: at(110), height: 70, background: "#000000" }} />
+          <div style={{ position: "absolute", left: at(150), top: 20, width: 0, height: 70, borderLeft: "2px dashed #000000" }} />
+          <div style={{ position: "absolute", left: 0, top: 90, width: 960, height: 3, background: "#000000" }} />
+          <div style={{ position: "absolute", left: at(168) - 3, top: 10, width: 6, height: 80, background: "#1e40ff" }} />
+          <div style={{ position: "absolute", left: at(168) - 12, top: 0, width: 24, height: 24, borderRadius: 12, background: "#1e40ff" }} />
+          {ticks.map((t) => (
+            <div key={t} style={{ position: "absolute", left: t === 100 ? 0 : at(t) - 30, top: 98, width: 60, display: "flex", justifyContent: t === 100 ? "flex-start" : "center", fontSize: 22, color: t === 110 ? "#000000" : "#5e5e5e", fontWeight: t === 110 ? 700 : 400 }}>
+              {t}%
+            </div>
+          ))}
         </div>
       </div>
     ),

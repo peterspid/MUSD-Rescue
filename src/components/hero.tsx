@@ -1,43 +1,72 @@
 "use client";
-import { useEffect, useState } from "react";
-import dynamic from "next/dynamic";
-import Link from "next/link";
+import { useState } from "react";
 import { FlaskConical } from "lucide-react";
 import { usePosition, useSystem } from "@/lib/client/api";
 import { amountsFromDTO, paramsFromDTO } from "@/lib/convert";
 import { WAD, applyBpsChange, assessPosition, positionFromEntire, MUSD_SOURCE_DEFAULTS } from "@/lib/risk";
-import { formatBps, formatHF, formatRatioPct, formatUsd, shortAddress } from "@/lib/risk/format";
+import { formatBps, formatHF, formatRatioPct, formatUsd } from "@/lib/risk/format";
 import { ConnectButton } from "./wallet";
-import { Button, RiskBadge, CATEGORY_COLOR, SourceTag } from "./ui";
-import { hfColor, clearanceHeight } from "./hero-color";
-
-const HeroScene = dynamic(() => import("./hero-scene"), { ssr: false, loading: () => <div className="absolute inset-0 grid place-items-center text-[13px] text-fg-3">Loading 3D view…</div> });
+import { Address, ButtonLink, CATEGORY_COLOR, HatchSwatch, RiskBadge, SourceTag, cn } from "./ui";
 
 /** The owner's real trove on Mezo testnet, used as the live example in the hero. */
 export const EXAMPLE_TROVE = "0x10ac9924a78051BdD770978740C5084205cdB628";
 
-function Poster({ icrPct, hf }: { icrPct: number; hf: number }) {
-  const h = clearanceHeight(icrPct);
-  const y = 250 - Math.max(-0.9, h) * 52;
-  const c = `#${hfColor(hf).getHexString()}`;
+const SCALE_MIN = 100;
+const SCALE_MAX = 250;
+const at = (p: number) => Math.min(1, Math.max(0, (p - SCALE_MIN) / (SCALE_MAX - SCALE_MIN)));
+const icrPctOf = (icr: bigint | null) => (icr == null ? null : Number((icr * 10_000n) / WAD) / 100);
+
+/**
+ * The clearance scale: collateral ratio from 100% to 250%. Below 110% is hatched (liquidation), the dashed
+ * line is the 150% Recovery Mode threshold, the blue marker is the trove at the chosen BTC price and the
+ * small black ring is where it sits at today's oracle price.
+ */
+function ClearanceScale({ icrPct, icrNowPct, moved }: { icrPct: number | null; icrNowPct: number | null; moved: boolean }) {
+  const ticks = Array.from({ length: (SCALE_MAX - SCALE_MIN) / 10 + 1 }, (_, i) => SCALE_MIN + i * 10);
+  const markerAt = icrPct == null ? null : at(icrPct);
+  const labelShift = markerAt == null ? "" : markerAt < 0.08 ? "translate-x-0" : markerAt > 0.92 ? "-translate-x-full" : "-translate-x-1/2";
+  const below = icrPct != null && icrPct < 110;
   return (
-    <svg viewBox="0 0 400 340" className="absolute inset-0 h-full w-full" role="img" aria-label={`Collateral sphere at ${icrPct.toFixed(0)}% above the 110% liquidation plane`}>
-      <defs>
-        <radialGradient id="ps" cx="38%" cy="32%" r="70%">
-          <stop offset="0" stopColor="#ffffff" stopOpacity="0.85" />
-          <stop offset="0.4" stopColor={c} />
-          <stop offset="1" stopColor="#101316" />
-        </radialGradient>
-        <radialGradient id="pp" cx="50%" cy="50%" r="50%">
-          <stop offset="0" stopColor="#f0544f" stopOpacity="0.55" />
-          <stop offset="1" stopColor="#f0544f" stopOpacity="0" />
-        </radialGradient>
-      </defs>
-      <ellipse cx="200" cy="262" rx="185" ry="46" fill="url(#pp)" />
-      <ellipse cx="200" cy="262" rx="150" ry="34" fill="none" stroke="#f0544f" strokeOpacity="0.6" />
-      <line x1="200" y1={y + 34} x2="200" y2="262" stroke="#7fe0d9" strokeOpacity="0.5" strokeDasharray="3 4" />
-      <circle cx="200" cy={y} r="34" fill="url(#ps)" />
-    </svg>
+    <div className="relative h-[156px] w-full select-none" aria-hidden>
+      {/* liquidation zone */}
+      <div className="hatch absolute top-[44px] h-[76px] border-y border-l border-ink" style={{ left: 0, width: `${at(110) * 100}%` }} />
+      <div className="absolute top-[30px] h-[90px] w-[2px] -translate-x-1/2 bg-ink" style={{ left: `${at(110) * 100}%` }} />
+      {/* recovery mode threshold */}
+      <div className="absolute top-[44px] h-[76px] -translate-x-1/2 border-l border-dashed border-ink" style={{ left: `${at(150) * 100}%` }} />
+      {/* axis + ticks */}
+      <div className="absolute inset-x-0 top-[120px] h-[2px] bg-ink" />
+      {ticks.map((t) => (
+        <div key={t} className={cn("absolute top-[122px] w-px -translate-x-1/2 bg-ink", t % 50 === 0 ? "h-[8px]" : "h-[4px]")} style={{ left: `${at(t) * 100}%` }} />
+      ))}
+      {[100, 110, 150, 200, 250].map((t) => (
+        <span
+          key={t}
+          className={cn("num absolute top-[132px] text-[12px]", t === 100 ? "translate-x-0" : t === 250 ? "-translate-x-full" : "-translate-x-1/2", t === 110 ? "font-semibold text-ink" : "text-muted", t === 100 && "hidden")}
+          style={{ left: `${at(t) * 100}%` }}
+        >
+          {t}%
+        </span>
+      ))}
+      {/* today's position, when the slider has moved */}
+      {moved && icrNowPct != null && (
+        <div className="absolute top-[52px] -translate-x-1/2" style={{ left: `${at(icrNowPct) * 100}%` }}>
+          <span className="block size-3 rounded-full border-2 border-ink bg-paper" />
+          <span className="mx-auto block h-[56px] w-px bg-ink" />
+        </div>
+      )}
+      {/* the trove at the chosen price */}
+      {markerAt != null && (
+        <>
+          <span className={cn("num absolute top-[4px] whitespace-nowrap text-[16px] font-semibold", labelShift, below ? "text-ink" : "text-blue")} style={{ left: `${markerAt * 100}%` }}>
+            {icrPct! > SCALE_MAX ? `>${SCALE_MAX}%` : `${icrPct!.toFixed(1)}%`}
+          </span>
+          <div className="absolute top-[32px] -translate-x-1/2" style={{ left: `${markerAt * 100}%` }}>
+            <span className={cn("block size-[14px] rounded-full", below ? "bg-ink" : "bg-blue")} />
+            <span className={cn("mx-auto block h-[74px] w-[3px]", below ? "bg-ink" : "bg-blue")} />
+          </div>
+        </>
+      )}
+    </div>
   );
 }
 
@@ -45,14 +74,6 @@ export function Hero() {
   const sys = useSystem();
   const ex = usePosition(EXAMPLE_TROVE);
   const [changeBps, setChangeBps] = useState(0);
-  const [mode, setMode] = useState<"3d" | "poster">("3d");
-  useEffect(() => {
-    const mq = window.matchMedia("(prefers-reduced-motion: reduce), (max-width: 639px)");
-    const set = () => setMode(mq.matches ? "poster" : "3d");
-    set();
-    mq.addEventListener("change", set);
-    return () => mq.removeEventListener("change", set);
-  }, []);
 
   const live = ex.data?.active && ex.data.system.price;
   const params = live ? paramsFromDTO(ex.data!.system.params) : MUSD_SOURCE_DEFAULTS;
@@ -60,82 +81,123 @@ export function Hero() {
   const base = live ? BigInt(ex.data!.system.price!) : sys.data?.price ? BigInt(sys.data.price) : 80_000n * WAD;
   const price = applyBpsChange(base, changeBps);
   const r = assessPosition(amounts, price, params, false);
-  const icrPct = r.icr == null ? 400 : Number((r.icr * 10_000n) / WAD) / 100;
-  const hf = r.hf == null ? 4 : Number((r.hf * 1000n) / WAD) / 1000;
+  const now = assessPosition(amounts, base, params, false);
+  const icrPct = icrPctOf(r.icr);
+  const liquidatable = r.category === "liquidatable";
 
   return (
-    <section className="relative overflow-hidden border-b border-ink-3">
-      <div className="grid-floor pointer-events-none absolute inset-0 opacity-[0.35] [mask-image:radial-gradient(ellipse_at_70%_60%,black,transparent_70%)]" aria-hidden />
-      <div className="relative mx-auto grid max-w-[1320px] items-center gap-8 px-4 py-12 sm:px-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] lg:py-16">
-        <div className="max-w-[600px]">
-          <p className="mb-5 inline-flex items-center gap-2 rounded-full border border-teal/30 bg-teal/10 px-3 py-1 text-[13px] text-teal">
-            <span className="size-1.5 rounded-full bg-teal" /> Live on Mezo testnet with the MUSD trove protocol
+    <section className="border-b border-line">
+      <div className="mx-auto grid max-w-[1240px] items-start gap-10 px-4 py-12 sm:px-6 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-14 lg:py-20">
+        <div className="max-w-[560px]">
+          <p className="flex items-center gap-2 text-[14px] text-ink-soft">
+            <span className="size-2 rounded-full bg-blue" aria-hidden /> Live on Mezo testnet, reading the MUSD protocol contracts
           </p>
-          <h1 className="font-display text-[44px] font-semibold leading-[1.02] tracking-[-0.02em] text-fg sm:text-[60px]">
-            Know Your Risk.
-            <br />
-            Rescue Your Position.
-          </h1>
-          <p className="mt-5 max-w-[52ch] text-[17px] leading-relaxed text-fg-2">
-            MUSD Rescue helps DeFi borrowers monitor collateral health, simulate repayment strategies, and act before liquidation risk becomes critical.
+          <h1 className="mt-5 text-[40px] font-bold leading-[1.04] tracking-[-0.03em] text-ink sm:text-[56px]">See how far BTC can fall before your trove is liquidated.</h1>
+          <p className="mt-6 max-w-[50ch] text-[17px] leading-relaxed text-ink-soft">
+            MUSD Rescue reads your Mezo MUSD trove straight from the protocol, shows the price that would liquidate it, and prepares the repayment or collateral top-up that keeps it above the line.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
-            <ConnectButton size="lg" label="Connect Wallet" />
-            <Link href="/demo">
-              <Button size="lg" variant="secondary">
-                <FlaskConical className="size-4" /> Explore Demo
-              </Button>
-            </Link>
+            <ConnectButton size="lg" label="Connect wallet" />
+            <ButtonLink href="/demo" size="lg" variant="secondary">
+              <FlaskConical className="size-4" aria-hidden /> Explore the demo
+            </ButtonLink>
           </div>
-          <p className="mt-6 max-w-[56ch] text-[13px] leading-relaxed text-fg-3">
-            MUSD Rescue provides risk-management information. It cannot guarantee that liquidation will be prevented: prices, interest and transaction timing can change faster than any rescue.
+          <p className="mt-8 max-w-[56ch] text-[13px] leading-relaxed text-muted">
+            Risk information only. MUSD Rescue cannot guarantee that a trove will not be liquidated: prices, interest and transaction timing can change faster than any rescue.
           </p>
         </div>
 
-        <div className="relative">
-          <div className="panel relative aspect-[5/4] w-full overflow-hidden bg-[radial-gradient(ellipse_at_50%_80%,rgba(240,84,79,0.10),transparent_60%)]">
-            {mode === "3d" ? <HeroScene icrPct={icrPct} hf={hf} /> : <Poster icrPct={icrPct} hf={hf} />}
-            <div className="pointer-events-none absolute left-4 top-4 flex flex-col items-start gap-1.5">
-              <span className="flex items-center gap-2 text-[12.5px] text-fg-2">
-                {live ? (
-                  <>
-                    <SourceTag kind="onchain" /> Live trove <span className="num">{shortAddress(EXAMPLE_TROVE)}</span>
-                  </>
-                ) : (
-                  <>
-                    <SourceTag kind="simulated" /> Illustration: 1 BTC, 50,000 MUSD
-                  </>
-                )}
-              </span>
-              <RiskBadge category={r.category} />
+        <div className="panel p-5 sm:p-6">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <span className="flex flex-wrap items-center gap-2 text-[13px] text-ink-soft">
+              {live ? (
+                <>
+                  <SourceTag kind="onchain" /> Live trove <Address value={EXAMPLE_TROVE} />
+                </>
+              ) : (
+                <>
+                  <SourceTag kind="simulated" /> Illustration: 1 BTC backing 50,000 MUSD
+                </>
+              )}
+            </span>
+            <RiskBadge category={r.category} />
+          </div>
+
+          <dl className="mt-5 grid grid-cols-3 gap-4">
+            <div className="min-w-0">
+              <dt className="text-[13px] text-muted">BTC price</dt>
+              <dd className={cn("num mt-0.5 truncate text-[22px] font-medium sm:text-[28px]", changeBps !== 0 && "simulated")}>{formatUsd(price, 0)}</dd>
+              <dd className="num text-[13px] text-muted">{changeBps === 0 ? "oracle now" : `${formatBps(changeBps, 1, true)} from oracle`}</dd>
             </div>
-            <div className="pointer-events-none absolute right-4 top-4 text-right">
-              <div className="num text-[28px] leading-none" style={{ color: CATEGORY_COLOR[r.category] }}>
+            <div className="min-w-0">
+              <dt className="text-[13px] text-muted">Collateral ratio</dt>
+              <dd className="num mt-0.5 truncate text-[22px] font-medium sm:text-[28px]" style={{ color: CATEGORY_COLOR[r.category] }}>
+                {formatRatioPct(r.icr)}
+              </dd>
+              <dd className="text-[13px] text-muted">liquidation below 110%</dd>
+            </div>
+            <div className="min-w-0">
+              <dt className="text-[13px] text-muted">Health factor</dt>
+              <dd className="num mt-0.5 truncate text-[22px] font-medium sm:text-[28px]" style={{ color: CATEGORY_COLOR[r.category] }}>
                 {formatHF(r.hf)}
-              </div>
-              <div className="text-[12px] text-fg-3">health factor</div>
-              <div className="num mt-2 text-[15px] text-fg">{formatRatioPct(r.icr)}</div>
-              <div className="text-[12px] text-fg-3">collateral ratio</div>
+              </dd>
+              <dd className="text-[13px] text-muted">1.00 is the line</dd>
             </div>
-            <div className="pointer-events-none absolute bottom-3 left-4 text-[12px] text-critical/90">Liquidation plane: 110% collateral ratio</div>
+          </dl>
+
+          <div className="mt-6">
+            <ClearanceScale icrPct={icrPct} icrNowPct={icrPctOf(now.icr)} moved={changeBps !== 0} />
           </div>
-          <div className="mt-4">
-            <label htmlFor="hero-price" className="flex items-baseline justify-between text-[13px] text-fg-3">
-              <span>Drag the BTC price and watch the collateral fall toward the liquidation plane</span>
+
+          <div className="mt-2">
+            <label htmlFor="hero-price" className="text-[14px] font-medium text-ink">
+              Move the BTC price
             </label>
-            <input id="hero-price" type="range" className="scrub" min={-6000} max={4000} step={25} value={changeBps} onChange={(e) => setChangeBps(Number(e.target.value))} aria-valuetext={`BTC ${formatUsd(price, 0)}, ${formatBps(changeBps, 1, true)}`} />
-            <div className="num flex justify-between text-[12.5px]">
-              <span className="text-fg-3">−60%</span>
-              <span className="text-fg">
-                BTC {formatUsd(price, 0)} <span className={changeBps < 0 ? "text-critical" : changeBps > 0 ? "text-safe" : "text-fg-3"}>{formatBps(changeBps, 1, true)}</span>
-              </span>
-              <span className="text-fg-3">+40%</span>
+            <input
+              id="hero-price"
+              type="range"
+              className="scrub"
+              min={-6000}
+              max={4000}
+              step={25}
+              value={changeBps}
+              onChange={(e) => setChangeBps(Number(e.target.value))}
+              aria-valuetext={`BTC ${formatUsd(price, 0)}, ${formatBps(changeBps, 1, true)}, collateral ratio ${formatRatioPct(r.icr)}`}
+            />
+            <div className="num flex justify-between text-[13px] text-muted">
+              <span>−60%</span>
+              <button type="button" className="text-blue underline-offset-4 hover:underline disabled:text-muted disabled:no-underline" onClick={() => setChangeBps(0)} disabled={changeBps === 0}>
+                Reset to oracle price
+              </button>
+              <span>+40%</span>
             </div>
-            <p className="mt-1 text-[12.5px] text-fg-3">
-              {r.liquidationPrice ? <>Liquidation below <span className="num text-fg-2">{formatUsd(r.liquidationPrice, 0)}</span>. </> : null}
-              Starting price is the on-chain MUSD oracle.
-            </p>
           </div>
+
+          <p className={cn("mt-4 border-t border-line pt-4 text-[15px]", liquidatable ? "font-semibold text-ink" : "text-ink-soft")}>
+            {liquidatable
+              ? "At this price the trove is below 110% and anyone can liquidate it."
+              : r.liquidationPrice
+                ? (
+                  <>
+                    Liquidated below <span className="num font-semibold text-ink">{formatUsd(r.liquidationPrice, 0)}</span>. From here BTC can fall{" "}
+                    <span className="num font-semibold text-ink">{formatBps(r.dropToLiquidationBps)}</span> before that happens.
+                  </>
+                )
+                : "No debt, so nothing can be liquidated."}
+          </p>
+          <ul className="mt-3 flex flex-wrap gap-x-5 gap-y-1.5 text-[13px] text-muted">
+            <li className="flex items-center gap-1.5">
+              <HatchSwatch /> Liquidation zone, below 110%
+            </li>
+            <li className="flex items-center gap-1.5">
+              <span className="h-3 border-l border-dashed border-ink" aria-hidden /> Recovery Mode threshold, 150%
+            </li>
+            {changeBps !== 0 && (
+              <li className="flex items-center gap-1.5">
+                <span className="size-2.5 rounded-full border-2 border-ink" aria-hidden /> At today&apos;s oracle price
+              </li>
+            )}
+          </ul>
         </div>
       </div>
     </section>

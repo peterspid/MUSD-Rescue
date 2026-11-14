@@ -38,31 +38,31 @@ export default function RadarPage() {
         <Stat label="Open troves" value={data.troves.length} />
         <Stat label="Oracle BTC" value={data.system.price ? formatUsd(BigInt(data.system.price), 0) : "—"} />
         <Stat label="System TCR" value={formatRatioPct(data.system.tcr ? BigInt(data.system.tcr) : null)} sub={data.system.recoveryMode ? "Recovery Mode active" : `Recovery Mode after BTC −${data.system.dropToRecoveryBps ? formatBps(BigInt(data.system.dropToRecoveryBps)) : "—"}`} />
-        <Stat label="Liquidatable now" value={liqNow.length} tone={liqNow.length ? "var(--color-critical)" : undefined} sub="ICR below 110%" />
-        <Stat label="Within a 10% drop" value={within(1000).length} tone="var(--color-high)" sub={`${formatAmount(debtWithin(1000), 0)} MUSD debt`} />
-        <Stat label="Within a 20% drop" value={within(2000).length} tone="var(--color-caution)" sub={`${formatAmount(debtWithin(2000), 0)} MUSD debt`} />
+        <Stat label="Liquidatable now" value={liqNow.length} tone={liqNow.length ? "var(--color-ink)" : undefined} sub="ICR below 110%" />
+        <Stat label="Within a 10% drop" value={within(1000).length} tone="var(--color-ink)" sub={`${formatAmount(debtWithin(1000), 0)} MUSD debt`} />
+        <Stat label="Within a 20% drop" value={within(2000).length} tone="var(--color-ink)" sub={`${formatAmount(debtWithin(2000), 0)} MUSD debt`} />
       </section>
       <section className="grid grid-cols-1 gap-5 lg:grid-cols-2">
         <div className="panel p-5">
-          <h2 className="font-display text-lg font-semibold">Troves by collateral ratio</h2>
+          <h2 className="text-lg font-semibold">Troves by collateral ratio</h2>
           <div className="mt-3">
             <RadarHistogram troves={data.troves} />
           </div>
         </div>
         <div className="panel p-5">
-          <h2 className="font-display text-lg font-semibold">Debt that becomes liquidatable as BTC falls</h2>
+          <h2 className="text-lg font-semibold">Debt that becomes liquidatable as BTC falls</h2>
           <div className="mt-3">{data.system.price && <LiquidationCurve troves={data.troves} price={BigInt(data.system.price)} />}</div>
         </div>
       </section>
       <section className="panel p-5">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2 className="font-display text-lg font-semibold">Riskiest troves</h2>
+          <h2 className="text-lg font-semibold">Riskiest troves</h2>
           <Segmented label="Rows" value={show} onChange={setShow} options={[{ value: "25", label: "25" }, { value: "100", label: "100" }, { value: "all", label: "All" }]} />
         </div>
         <div className="mt-3 overflow-x-auto">
-          <table className="w-full min-w-[720px] text-left text-[13.5px]">
+          <table className="w-full min-w-[720px] text-left text-[14px]">
             <thead>
-              <tr className="text-[12px] text-fg-3">
+              <tr className="text-[12px] text-muted">
                 <th className="py-2 font-normal">#</th>
                 <th className="py-2 font-normal">Owner</th>
                 <th className="py-2 font-normal">Status</th>
@@ -77,9 +77,9 @@ export default function RadarPage() {
               {list.map((t, i) => {
                 const hf = t.icr ? healthFactor(BigInt(t.icr), mcr) : null;
                 return (
-                  <tr key={t.owner} className="border-t border-ink-4">
-                    <td className="num py-2 text-fg-3">{i + 1}</td>
-                    <td className="py-2"><Link className="num text-teal hover:underline" href={`/positions/${t.owner}`}>{shortAddress(t.owner, 5)}</Link></td>
+                  <tr key={t.owner} className="border-t border-line">
+                    <td className="num py-2 text-muted">{i + 1}</td>
+                    <td className="py-2"><Link className="num text-blue hover:underline" href={`/positions/${t.owner}`}>{shortAddress(t.owner, 5)}</Link></td>
                     <td className="py-2"><RiskBadge category={classifyRisk(hf, session.thresholds)} size="sm" /></td>
                     <td className="num py-2">{formatRatioPct(t.icr ? BigInt(t.icr) : null)}</td>
                     <td className="num py-2">{formatBtc(BigInt(t.coll))}</td>
@@ -92,7 +92,7 @@ export default function RadarPage() {
             </tbody>
           </table>
         </div>
-        <p className="mt-3 text-[12.5px] text-fg-3">Testnet troves include test and scale-test positions; amounts are testnet MUSD. Cached for 60 seconds. One trove per address, so the owner address is the trove id.</p>
+        <p className="mt-3 text-[13px] text-muted">Testnet troves include test and scale-test positions; amounts are testnet MUSD. Cached for 60 seconds. One trove per address, so the owner address is the trove id.</p>
       </section>
     </div>
   );

@@ -13,9 +13,9 @@ export function Providers({ children }: { children: ReactNode }) {
       <QueryClientProvider client={qc}>
         <SessionProvider>{children}</SessionProvider>
         <Toaster
-          theme="dark"
+          theme="light"
           position="bottom-right"
-          toastOptions={{ style: { background: "#1b2025", border: "1px solid #2c343c", color: "#e8ecef", fontFamily: "var(--font-barlow)" } }}
+          toastOptions={{ style: { background: "#ffffff", border: "1px solid #000000", borderRadius: 6, boxShadow: "none", color: "#000000", fontFamily: "var(--font-archivo)" } }}
         />
       </QueryClientProvider>
     </WagmiProvider>

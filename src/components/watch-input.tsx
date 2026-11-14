@@ -27,12 +27,12 @@ export function WatchInput({ className, compact }: { className?: string; compact
         <label htmlFor="watch" className="sr-only">
           Trove owner address
         </label>
-        <input id="watch" value={v} onChange={(e) => (setV(e.target.value), setErr(null))} placeholder="0x… any trove owner address" className={cn(inputCls, compact && "h-10")} spellCheck={false} autoComplete="off" />
+        <input id="watch" value={v} onChange={(e) => (setV(e.target.value), setErr(null))} placeholder="0x… trove owner address" className={cn(inputCls, compact && "h-10")} spellCheck={false} autoComplete="off" />
         <Button type="submit" variant="secondary" className={compact ? "h-10" : "h-11"}>
           <Eye className="size-4" /> Watch
         </Button>
       </div>
-      {err && <p className="text-[12.5px] text-critical">{err}</p>}
+      {err && <p role="alert" className="text-[13px] font-medium text-ink">{err}</p>}
     </form>
   );
 }

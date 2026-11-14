@@ -5,7 +5,7 @@ const config = [
   ...nextVitals,
   ...nextTs,
   {
-    ignores: [".next/**", "node_modules/**", "next-env.d.ts", "src/config/abis.ts"],
+    ignores: [".next/**", "node_modules/**", "contracts/**", "next-env.d.ts", "src/config/abis.ts"],
   },
   {
     rules: {

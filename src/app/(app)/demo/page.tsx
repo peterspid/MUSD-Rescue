@@ -14,8 +14,8 @@ export default function DemoPage() {
   const pos = DEMO_POSITIONS.find((p) => p.id === id)!;
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center gap-3 rounded-[var(--radius-panel)] border border-fiction/50 bg-fiction/10 px-4 py-3 text-[14px] text-fg">
-        <FlaskConical className="size-5 shrink-0 text-fiction" aria-hidden />
+      <div className="flex items-center gap-3 rounded-[var(--radius-panel)] border border-ink bg-paper px-4 py-3 text-[14px] text-ink">
+        <FlaskConical className="size-5 shrink-0 text-ink-soft" aria-hidden />
         <p>
           <strong className="font-semibold">FICTIONAL DEMO.</strong> These three positions, their prices and every simulated transaction are made up. Nothing here reads or writes the blockchain, and none of it appears on your live dashboard.
         </p>
@@ -30,17 +30,17 @@ export default function DemoPage() {
               role="radio"
               aria-checked={id === p.id}
               onClick={() => setId(p.id)}
-              className={cn("panel fictional p-4 text-left transition-colors", id === p.id ? "ring-2 ring-fiction/70" : "opacity-85 hover:opacity-100")}
+              className={cn("panel fictional p-4 text-left transition-colors", id === p.id ? "ring-2 ring-ink" : "opacity-85 hover:opacity-100")}
             >
               <div className="flex items-center justify-between">
-                <span className="font-display text-lg font-semibold">{p.name}</span>
+                <span className="text-lg font-semibold">{p.name}</span>
                 <SourceTag kind="fictional" />
               </div>
-              <p className="mt-1 text-[13px] text-fg-2">{p.story}</p>
+              <p className="mt-1 text-[13px] text-ink-soft">{p.story}</p>
               <div className="mt-3 flex items-end justify-between">
                 <div>
                   <div className="num text-2xl" style={{ color: CATEGORY_COLOR[r.category] }}>{formatHF(r.hf)}</div>
-                  <div className="num text-[12px] text-fg-3">{formatBtc(p.amounts.coll)} BTC, {formatAmount(p.amounts.debt, 0)} MUSD, ICR {formatRatioPct(r.icr)}</div>
+                  <div className="num text-[12px] text-muted">{formatBtc(p.amounts.coll)} BTC, {formatAmount(p.amounts.debt, 0)} MUSD, ICR {formatRatioPct(r.icr)}</div>
                 </div>
                 <RiskBadge category={r.category} size="sm" />
               </div>
@@ -60,7 +60,7 @@ export default function DemoPage() {
         thresholds={session.thresholds}
         active
       />
-      <p className="text-[13px] text-fg-3">
+      <p className="text-[13px] text-muted">
         Fictional wallet for {pos.name}: {formatAmount(pos.walletMusd)} MUSD and {formatBtc(pos.walletBtc)} BTC. Fictional base price $80,000; the fictional system enters Recovery Mode below about $60,000.
       </p>
     </div>

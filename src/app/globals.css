@@ -1,53 +1,43 @@
 @import "tailwindcss";
 
 /*
-  MUSD Rescue — "clearance instrument" design tokens.
-  Graphite base, one cool teal brand accent, and four semantic risk colours that always ship with text.
+  MUSD Rescue design tokens.
+  Three colours only: white paper, black ink, one signal blue. Every grey is a black/white mix.
+  Risk is shown by ink density, never by hue: healthy = blue, caution = black outline,
+  high = heavy black outline, critical = solid black, liquidatable = solid black with hatching.
+  Hatching (45° black lines) is reserved for the liquidation zone and means danger everywhere.
 */
 @theme {
-  --color-ink-0: #101316;
-  --color-ink-1: #15191d;
-  --color-ink-2: #1b2025;
-  --color-ink-3: #222930;
-  --color-ink-4: #2c343c;
-  --color-ink-5: #3a444e;
-  --color-fg: #e8ecef;
-  --color-fg-2: #a9b3bb;
-  --color-fg-3: #7a8690;
-  --color-teal: #4fc6bf;
-  --color-teal-strong: #7fe0d9;
-  --color-teal-deep: #1f6f6b;
-  --color-safe: #4cbf80;
-  --color-caution: #e4a93f;
-  --color-high: #ef8442;
-  --color-critical: #f0544f;
-  --color-fiction: #b9a8ff;
+  --color-paper: #ffffff;
+  --color-surface: #f4f4f4;
+  --color-line: #e6e6e6;
+  --color-line-strong: #bdbdbd;
+  --color-muted: #5e5e5e;
+  --color-ink-soft: #2e2e2e;
+  --color-ink: #000000;
+  --color-blue: #1e40ff;
+  --color-blue-deep: #1532cc;
+  --color-blue-tint: #eef1ff;
 
-  --font-sans: var(--font-barlow), ui-sans-serif, system-ui, sans-serif;
-  --font-display: var(--font-barlow-condensed), var(--font-barlow), ui-sans-serif, sans-serif;
-  --font-mono: var(--font-jetbrains), ui-monospace, "SFMono-Regular", monospace;
+  --font-sans: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, "SFMono-Regular", "Cascadia Mono", Menlo, Consolas, monospace;
 
-  --radius-panel: 14px;
-  --radius-control: 8px;
-
-  --shadow-depth: 0 1px 0 rgb(255 255 255 / 0.04) inset, 0 18px 40px -24px rgb(0 0 0 / 0.75), 0 2px 6px -2px rgb(0 0 0 / 0.5);
-  --shadow-lift: 0 1px 0 rgb(255 255 255 / 0.06) inset, 0 28px 60px -28px rgb(0 0 0 / 0.85);
-
-  --animate-sweep: sweep 2.4s ease-in-out infinite;
-  @keyframes sweep {
-    0%, 100% { opacity: 0.35; }
-    50% { opacity: 1; }
-  }
+  --radius-panel: 8px;
+  --radius-control: 6px;
+  --radius-badge: 4px;
 }
 
 :root {
-  color-scheme: dark;
+  color-scheme: light;
+  /* 45° hatch, as SVG tiles so no CSS gradients are involved. */
+  --hatch-ink: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='6'%3E%3Cpath d='M-1 1l2-2M0 6l6-6M5 7l2-2' stroke='%23000' stroke-width='1.1'/%3E%3C/svg%3E");
+  --hatch-paper: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='6'%3E%3Cpath d='M-1 1l2-2M0 6l6-6M5 7l2-2' stroke='%23ffffff' stroke-opacity='0.38' stroke-width='1.1'/%3E%3C/svg%3E");
 }
 
 html,
 body {
-  background: var(--color-ink-0);
-  color: var(--color-fg);
+  background: var(--color-paper);
+  color: var(--color-ink);
 }
 
 body {
@@ -58,61 +48,71 @@ body {
   text-rendering: optimizeLegibility;
 }
 
-/* Every figure uses tabular mono numerals. */
+h1,
+h2,
+h3 {
+  text-wrap: balance;
+}
+
+/* Figures: tabular, semi-condensed Archivo. */
 .num {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+  font-stretch: 87.5%;
+}
+
+/* Addresses and hashes only. */
+.addr {
   font-family: var(--font-mono);
-  font-variant-numeric: tabular-nums slashed-zero;
-  font-feature-settings: "tnum" 1, "zero" 1;
+  font-size: 0.92em;
   letter-spacing: -0.01em;
 }
 
 ::selection {
-  background: color-mix(in oklab, var(--color-teal) 40%, transparent);
+  background: var(--color-blue-tint);
+  color: var(--color-ink);
 }
 
 :focus-visible {
-  outline: 2px solid var(--color-teal-strong);
+  outline: 2px solid var(--color-blue);
   outline-offset: 2px;
-  border-radius: 6px;
+  border-radius: 4px;
 }
 
-/* Surfaces */
+/* Surfaces: flat, bordered, no shadows. */
 .panel {
-  background: linear-gradient(180deg, var(--color-ink-2), color-mix(in oklab, var(--color-ink-2) 85%, var(--color-ink-1)));
-  border: 1px solid var(--color-ink-4);
-  border-radius: var(--radius-panel);
-  box-shadow: var(--shadow-depth);
-}
-.panel-flat {
-  background: var(--color-ink-1);
-  border: 1px solid var(--color-ink-3);
+  background: var(--color-paper);
+  border: 1px solid var(--color-line);
   border-radius: var(--radius-panel);
 }
 .well {
-  background: var(--color-ink-1);
-  border: 1px solid var(--color-ink-3);
+  background: var(--color-surface);
   border-radius: var(--radius-control);
 }
-.glass {
-  background: color-mix(in oklab, var(--color-ink-2) 72%, transparent);
-  backdrop-filter: blur(14px) saturate(120%);
-  border: 1px solid color-mix(in oklab, var(--color-ink-5) 70%, transparent);
+
+/* Example (fictional) data: dotted black edge plus a visible "Example data" label. */
+.example {
+  border: 1px dotted var(--color-ink) !important;
 }
 
-/* Fictional data: hatched, violet-edged, impossible to confuse with live state. */
-.fictional {
-  background-image: repeating-linear-gradient(135deg, color-mix(in oklab, var(--color-fiction) 10%, transparent) 0 6px, transparent 6px 14px);
-  border-color: color-mix(in oklab, var(--color-fiction) 45%, var(--color-ink-4)) !important;
+/* Liquidation zone. */
+.hatch {
+  background-color: var(--color-paper);
+  background-image: var(--hatch-ink);
+}
+.hatch-inverse {
+  background-color: var(--color-ink);
+  background-image: var(--hatch-paper);
 }
 
-/* Simulated (not on-chain) values get a dashed underline. */
+/* Simulated (not on-chain) values get a dashed blue underline. */
 .simulated {
-  text-decoration: underline dashed color-mix(in oklab, var(--color-teal) 55%, transparent);
+  text-decoration: underline dashed var(--color-blue);
   text-underline-offset: 5px;
   text-decoration-thickness: 1px;
 }
 
-/* Range input styling for the price scenario slider. */
+/* Price scenario slider: flat black track, blue thumb. */
 input[type="range"].scrub {
   -webkit-appearance: none;
   appearance: none;
@@ -125,32 +125,31 @@ input[type="range"].scrub:active {
   cursor: grabbing;
 }
 input[type="range"].scrub::-webkit-slider-runnable-track {
-  height: 6px;
-  border-radius: 999px;
-  background: linear-gradient(90deg, var(--color-critical), var(--color-high) 30%, var(--color-caution) 50%, var(--color-safe) 75%);
-  opacity: 0.85;
+  height: 2px;
+  background: var(--color-ink);
 }
 input[type="range"].scrub::-moz-range-track {
-  height: 6px;
-  border-radius: 999px;
-  background: linear-gradient(90deg, var(--color-critical), var(--color-high) 30%, var(--color-caution) 50%, var(--color-safe) 75%);
+  height: 2px;
+  background: var(--color-ink);
 }
 input[type="range"].scrub::-webkit-slider-thumb {
   -webkit-appearance: none;
-  width: 22px;
-  height: 22px;
-  margin-top: -8px;
+  width: 20px;
+  height: 20px;
+  margin-top: -9px;
   border-radius: 999px;
-  background: var(--color-fg);
-  border: 3px solid var(--color-ink-0);
-  box-shadow: 0 0 0 1px var(--color-ink-5), 0 6px 14px rgb(0 0 0 / 0.6);
+  background: var(--color-blue);
+  border: 0;
 }
 input[type="range"].scrub::-moz-range-thumb {
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
   border-radius: 999px;
-  background: var(--color-fg);
-  border: 3px solid var(--color-ink-0);
+  background: var(--color-blue);
+  border: 0;
+}
+input[type="range"].scrub:focus-visible {
+  outline-offset: 4px;
 }
 
 /* Number inputs without spinners */
@@ -161,21 +160,13 @@ input[type="number"]::-webkit-inner-spin-button {
 }
 
 .skeleton {
-  background: linear-gradient(90deg, var(--color-ink-3), var(--color-ink-4), var(--color-ink-3));
-  background-size: 200% 100%;
-  animation: shimmer 1.4s linear infinite;
-  border-radius: 6px;
+  background: var(--color-surface);
+  border-radius: 4px;
+  animation: pulse 1.6s ease-in-out infinite;
 }
-@keyframes shimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
-}
-
-.grid-floor {
-  background-image:
-    linear-gradient(color-mix(in oklab, var(--color-ink-4) 55%, transparent) 1px, transparent 1px),
-    linear-gradient(90deg, color-mix(in oklab, var(--color-ink-4) 55%, transparent) 1px, transparent 1px);
-  background-size: 48px 48px;
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -193,21 +184,15 @@ input[type="number"]::-webkit-inner-spin-button {
   html,
   body {
     background: #fff !important;
-    color: #111 !important;
+    color: #000 !important;
   }
   .no-print {
     display: none !important;
   }
   .panel,
-  .panel-flat,
   .well {
     background: #fff !important;
-    border-color: #bbb !important;
-    box-shadow: none !important;
-    color: #111 !important;
-  }
-  .print-dark-text,
-  .print-dark-text * {
-    color: #111 !important;
+    border: 1px solid #bdbdbd !important;
+    color: #000 !important;
   }
 }

@@ -26,7 +26,7 @@ export interface RuleRow {
 }
 
 const FREQ_LABEL: Record<AlertFrequency, string> = { every_check: "Every check", once_per_hour: "At most hourly", once_per_day: "At most daily" };
-const selectCls = "h-11 w-full rounded-[var(--radius-control)] border border-ink-4 bg-ink-1 px-3 text-[14px] text-fg focus:border-teal focus:outline-none";
+const selectCls = "h-11 w-full rounded-[var(--radius-control)] border border-line bg-surface px-3 text-[14px] text-ink focus:border-blue focus:outline-none";
 
 export function useRules() {
   const session = useSession();
@@ -49,8 +49,8 @@ export function AlertRules({ owner, compact }: { owner?: string; compact?: boole
 
   if (!session.address) {
     return (
-      <div className="well flex flex-wrap items-center gap-3 p-4 text-[14px] text-fg-2">
-        <KeyRound className="size-4 text-teal" />
+      <div className="well flex flex-wrap items-center gap-3 p-4 text-[14px] text-ink-soft">
+        <KeyRound className="size-4 text-blue" />
         <span className="flex-1">Sign in with your wallet (a free signature, no transaction) to save alert rules.</span>
         <Button size="sm" variant="secondary" loading={session.signingIn} onClick={() => session.signIn()}>
           Sign in
@@ -134,12 +134,12 @@ export function AlertRules({ owner, compact }: { owner?: string; compact?: boole
           </select>
         </Field>
       </div>
-      <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-[13.5px] text-fg-2">
+      <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-[14px] text-ink-soft">
         <label className="flex items-center gap-2">
-          <input type="checkbox" checked={browser} onChange={(e) => setBrowser(e.target.checked)} className="accent-[var(--color-teal)]" /> Also show a browser notification while the app is open
+          <input type="checkbox" checked={browser} onChange={(e) => setBrowser(e.target.checked)} className="accent-[var(--color-blue)]" /> Also show a browser notification while the app is open
         </label>
         <label className="flex items-center gap-2">
-          <input type="checkbox" checked={quietOn} onChange={(e) => setQuietOn(e.target.checked)} className="accent-[var(--color-teal)]" /> Quiet hours
+          <input type="checkbox" checked={quietOn} onChange={(e) => setQuietOn(e.target.checked)} className="accent-[var(--color-blue)]" /> Quiet hours
         </label>
         {quietOn && (
           <span className="flex items-center gap-2">
@@ -147,19 +147,19 @@ export function AlertRules({ owner, compact }: { owner?: string; compact?: boole
             <input aria-label="Quiet hours start" className={cn(inputCls, "h-9 w-16")} value={qs} onChange={(e) => setQs(e.target.value)} />
             to
             <input aria-label="Quiet hours end" className={cn(inputCls, "h-9 w-16")} value={qe} onChange={(e) => setQe(e.target.value)} />
-            <span className="text-fg-3">(local hour, 0–23)</span>
+            <span className="text-muted">(local hour, 0–23)</span>
           </span>
         )}
         <Button className="ml-auto" variant="primary" size="sm" loading={saving} onClick={create}>
           <Plus className="size-4" /> Add rule
         </Button>
       </div>
-      <p className="text-[12.5px] text-fg-3">{meta.describe(threshold === "" ? null : Number(threshold))}. In-app notifications are always recorded; quiet hours only silence browser pop-ups.</p>
+      <p className="text-[13px] text-muted">{meta.describe(threshold === "" ? null : Number(threshold))}. In-app notifications are always recorded; quiet hours only silence browser pop-ups.</p>
 
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[560px] text-left text-[13.5px]">
+        <table className="w-full min-w-[560px] text-left text-[14px]">
           <thead>
-            <tr className="text-[12px] text-fg-3">
+            <tr className="text-[12px] text-muted">
               {!owner && <th className="py-2 font-normal">Trove</th>}
               <th className="py-2 font-normal">Condition</th>
               <th className="py-2 font-normal">Frequency</th>
@@ -172,28 +172,28 @@ export function AlertRules({ owner, compact }: { owner?: string; compact?: boole
           <tbody>
             {list.length === 0 && (
               <tr>
-                <td colSpan={7} className="py-4 text-fg-3">
+                <td colSpan={7} className="py-4 text-muted">
                   No rules yet.
                 </td>
               </tr>
             )}
             {list.map((r) => (
-              <tr key={r.id} className="border-t border-ink-4">
+              <tr key={r.id} className="border-t border-line">
                 {!owner && <td className="num py-2.5">{shortAddress(r.trove_owner)}</td>}
                 <td className="py-2.5">
                   {ALERT_KINDS[r.kind].describe(r.threshold)}
-                  {r.quiet_start != null && <span className="ml-2 text-[12px] text-fg-3">quiet {r.quiet_start}:00–{r.quiet_end}:00</span>}
-                  {r.channel === "in_app_browser" && <span className="ml-2 text-[12px] text-fg-3">+ browser</span>}
+                  {r.quiet_start != null && <span className="ml-2 text-[12px] text-muted">quiet {r.quiet_start}:00–{r.quiet_end}:00</span>}
+                  {r.channel === "in_app_browser" && <span className="ml-2 text-[12px] text-muted">+ browser</span>}
                 </td>
-                <td className="py-2.5 text-fg-2">{FREQ_LABEL[r.frequency]}</td>
-                <td className="num py-2.5 text-fg-3">{r.last_evaluated_at ? new Date(r.last_evaluated_at).toLocaleString() : "never"}</td>
-                <td className="num py-2.5 text-fg-3">{r.last_triggered_at ? new Date(r.last_triggered_at).toLocaleString() : "—"}</td>
+                <td className="py-2.5 text-ink-soft">{FREQ_LABEL[r.frequency]}</td>
+                <td className="num py-2.5 text-muted">{r.last_evaluated_at ? new Date(r.last_evaluated_at).toLocaleString() : "never"}</td>
+                <td className="num py-2.5 text-muted">{r.last_triggered_at ? new Date(r.last_triggered_at).toLocaleString() : "—"}</td>
                 <td className="py-2.5">
                   <input
                     type="checkbox"
                     aria-label="Enabled"
                     checked={r.enabled}
-                    className="accent-[var(--color-teal)]"
+                    className="accent-[var(--color-blue)]"
                     onChange={async (e) => {
                       await api(`/api/alerts/${r.id}`, { method: "PATCH", json: { enabled: e.target.checked } }).catch((er) => toast.error((er as Error).message));
                       qc.invalidateQueries({ queryKey: ["rules"] });
@@ -202,7 +202,7 @@ export function AlertRules({ owner, compact }: { owner?: string; compact?: boole
                 </td>
                 <td className="py-2.5 text-right">
                   <button
-                    className="rounded p-1 text-fg-3 hover:text-critical"
+                    className="rounded p-1 text-muted hover:text-ink"
                     aria-label="Delete rule"
                     onClick={async () => {
                       await api(`/api/alerts/${r.id}`, { method: "DELETE" }).catch((er) => toast.error((er as Error).message));

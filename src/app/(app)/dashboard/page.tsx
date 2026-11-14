@@ -66,13 +66,13 @@ export default function DashboardPage() {
           <Stat label="Collateral value" value={formatUsd(summary.totalCollValue, 0)} sub="at oracle price" />
           <Stat label="Outstanding debt" value={`${formatAmount(summary.totalDebt, 0)}`} sub="MUSD incl. interest" />
           <Stat label="Weakest health factor" value={summary.weakest ? formatHF(summary.weakest.hf) : "—"} tone={summary.weakest ? CATEGORY_COLOR[summary.weakest.category] : undefined} sub={summary.weakest ? shortAddress(summary.weakest.owner) : "no debt"} />
-          <Stat label="Healthy" value={summary.healthy} tone="var(--color-safe)" />
-          <Stat label="Needs attention" value={summary.attention} tone="var(--color-caution)" />
-          <Stat label="Critical" value={summary.critical} tone="var(--color-critical)" />
+          <Stat label="Healthy" value={summary.healthy} tone="var(--color-blue)" />
+          <Stat label="Needs attention" value={summary.attention} tone="var(--color-ink)" />
+          <Stat label="Critical" value={summary.critical} tone="var(--color-ink)" />
           <div className="min-w-0">
-            <div className="text-[13px] text-fg-3">Data source</div>
-            <div className="mt-1 text-[13.5px] text-fg">TroveManager + PriceFeed</div>
-            <div className="text-[12.5px] text-fg-3">{sys.data ? `Mezo Testnet, block ${Number(sys.data.blockNumber).toLocaleString("en-US")}` : sys.error ? "RPC unavailable" : "connecting…"}</div>
+            <div className="text-[13px] text-muted">Data source</div>
+            <div className="mt-1 text-[14px] text-ink">TroveManager + PriceFeed</div>
+            <div className="text-[13px] text-muted">{sys.data ? `Mezo Testnet, block ${Number(sys.data.blockNumber).toLocaleString("en-US")}` : sys.error ? "RPC unavailable" : "connecting…"}</div>
           </div>
         </section>
       )}
@@ -81,9 +81,9 @@ export default function DashboardPage() {
         <EmptyState icon={<Wallet className="size-7" />} title={`No open MUSD trove for ${shortAddress(address)}`}>
           <p>This wallet has no active trove on Mezo testnet ({own.statusLabel.toLowerCase()}), so there is nothing to liquidate or rescue. Next steps:</p>
           <ul className="mt-3 list-disc space-y-1 pl-5">
-            <li>Open a trove (borrow MUSD against BTC) in the official Mezo app, then come back. <a href="https://mezo.org" target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-teal hover:underline">mezo.org <ExternalLink className="size-3" /></a></li>
-            <li>Get testnet BTC for gas from the <a href="https://faucet.test.mezo.org/" target="_blank" rel="noreferrer" className="text-teal hover:underline">Mezo faucet</a>.</li>
-            <li>Watch another trove read-only, or try the fictional <Link href="/demo" className="text-teal hover:underline">demo</Link>.</li>
+            <li>Open a trove (borrow MUSD against BTC) in the official Mezo app, then come back. <a href="https://mezo.org" target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-blue hover:underline">mezo.org <ExternalLink className="size-3" /></a></li>
+            <li>Get testnet BTC for gas from the <a href="https://faucet.test.mezo.org/" target="_blank" rel="noreferrer" className="text-blue hover:underline">Mezo faucet</a>.</li>
+            <li>Watch another trove read-only, or try the fictional <Link href="/demo" className="text-blue hover:underline">demo</Link>.</li>
           </ul>
           <div className="mt-4 flex flex-col gap-3">
             <WatchInput className="max-w-[560px]" />
@@ -116,16 +116,16 @@ export default function DashboardPage() {
         </div>
       )}
       {positions.filter((p) => !p.active && p.owner.toLowerCase() !== address?.toLowerCase()).map((p) => (
-        <div key={p.owner} className="panel-flat flex items-center justify-between p-4 text-[14px] text-fg-2">
+        <div key={p.owner} className="panel flex items-center justify-between p-4 text-[14px] text-ink-soft">
           <span><span className="num">{shortAddress(p.owner)}</span>: no active trove ({p.statusLabel.toLowerCase()}).</span>
           <Button size="sm" variant="ghost" onClick={() => session.removeWatch(p.owner)}>Remove</Button>
         </div>
       ))}
 
       {owners.length > 0 && (
-        <section className="panel-flat p-5">
+        <section className="panel p-5">
           <h2 className="font-medium">Watch another trove</h2>
-          <p className="mt-1 text-[13.5px] text-fg-3">Open any address read-only, then use “Watch” on its page to keep it on this dashboard.</p>
+          <p className="mt-1 text-[14px] text-muted">Open any address read-only, then use “Watch” on its page to keep it on this dashboard.</p>
           <WatchInput className="mt-3 max-w-[560px]" compact />
         </section>
       )}

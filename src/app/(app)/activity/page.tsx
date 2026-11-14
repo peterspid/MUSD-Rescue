@@ -75,7 +75,7 @@ export default function ActivityPage() {
       {session.address && (
         <section className="panel p-5 sm:p-6">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <h2 className="font-display text-lg font-semibold">Verified rescue transactions</h2>
+            <h2 className="text-lg font-semibold">Verified rescue transactions</h2>
             {!!q.data?.transactions.length && (
               <Button
                 size="sm"
@@ -93,12 +93,12 @@ export default function ActivityPage() {
             )}
           </div>
           {q.isLoading && <Skeleton className="mt-4 h-20" />}
-          {q.data && q.data.transactions.length === 0 && <p className="mt-3 text-[14px] text-fg-3">No verified rescues yet.</p>}
+          {q.data && q.data.transactions.length === 0 && <p className="mt-3 text-[14px] text-muted">No verified rescues yet.</p>}
           <div className="mt-3 overflow-x-auto">
             {!!q.data?.transactions.length && (
-              <table className="w-full min-w-[640px] text-left text-[13.5px]">
+              <table className="w-full min-w-[640px] text-left text-[14px]">
                 <thead>
-                  <tr className="text-[12px] text-fg-3">
+                  <tr className="text-[12px] text-muted">
                     <th className="py-2 font-normal">Action</th>
                     <th className="py-2 font-normal">Amount</th>
                     <th className="py-2 font-normal">Status</th>
@@ -109,14 +109,14 @@ export default function ActivityPage() {
                 </thead>
                 <tbody>
                   {q.data.transactions.map((t) => (
-                    <tr key={t.tx_hash} className="border-t border-ink-4">
+                    <tr key={t.tx_hash} className="border-t border-line">
                       <td className="py-2.5">{t.action === "repay" ? "Repay MUSD" : t.action === "add_collateral" ? "Add BTC" : "Repay + add BTC"}</td>
                       <td className="num py-2.5">
                         {BigInt(t.repay_amount) > 0n && <div>{formatAmount(BigInt(t.repay_amount), 4)} MUSD</div>}
                         {BigInt(t.coll_amount) > 0n && <div>{formatBtc(BigInt(t.coll_amount))} BTC</div>}
                       </td>
                       <td className="py-2.5">
-                        <span className={t.status === "confirmed" ? "text-safe" : "text-critical"}>{t.status}</span> <SourceTag kind="onchain" className="ml-1" />
+                        <span className={t.status === "confirmed" ? "text-blue" : "text-ink"}>{t.status}</span> <SourceTag kind="onchain" className="ml-1" />
                       </td>
                       <td className="num py-2.5">{formatRatioPct(t.icr_before ? BigInt(t.icr_before) : undefined, 2)} → {formatRatioPct(t.icr_after ? BigInt(t.icr_after) : undefined, 2)}</td>
                       <td className="num py-2.5">{Number(t.block_number).toLocaleString("en-US")}</td>
@@ -132,18 +132,18 @@ export default function ActivityPage() {
 
       {session.address && (
         <section className="panel p-5 sm:p-6">
-          <h2 className="font-display text-lg font-semibold">Event log</h2>
+          <h2 className="text-lg font-semibold">Event log</h2>
           {q.isLoading && <Skeleton className="mt-4 h-24" />}
-          {q.data && events.length === 0 && <p className="mt-3 text-[14px] text-fg-3">Nothing here yet.</p>}
-          <ol className="mt-3 divide-y divide-ink-4">
+          {q.data && events.length === 0 && <p className="mt-3 text-[14px] text-muted">Nothing here yet.</p>}
+          <ol className="mt-3 divide-y divide-line">
             {events.map((e) => (
-              <li key={e.id} className="flex flex-wrap items-center gap-x-4 gap-y-1 py-2.5 text-[13.5px]">
+              <li key={e.id} className="flex flex-wrap items-center gap-x-4 gap-y-1 py-2.5 text-[14px]">
                 <SourceTag kind={e.category === "onchain" ? "onchain" : "offchain"} />
-                <span className="min-w-[160px] text-fg-3">{KIND_LABEL[e.kind] ?? e.kind}</span>
-                <span className="flex-1 text-fg">{e.title}</span>
-                {e.trove_owner && <span className="num text-fg-3">{shortAddress(e.trove_owner)}</span>}
+                <span className="min-w-[160px] text-muted">{KIND_LABEL[e.kind] ?? e.kind}</span>
+                <span className="flex-1 text-ink">{e.title}</span>
+                {e.trove_owner && <span className="num text-muted">{shortAddress(e.trove_owner)}</span>}
                 {e.tx_hash && <ExplorerLink hash={e.tx_hash} />}
-                <span className="num text-[12px] text-fg-3">{new Date(e.created_at).toLocaleString()}</span>
+                <span className="num text-[12px] text-muted">{new Date(e.created_at).toLocaleString()}</span>
               </li>
             ))}
           </ol>
@@ -153,15 +153,15 @@ export default function ActivityPage() {
       {address && (
         <section className="panel p-5 sm:p-6">
           <div className="flex items-center justify-between">
-            <h2 className="font-display text-lg font-semibold">Protocol log for your trove</h2>
+            <h2 className="text-lg font-semibold">Protocol log for your trove</h2>
             <SourceTag kind="onchain" />
           </div>
-          {chainEvents.data?.events.length === 0 && <p className="mt-3 text-[14px] text-fg-3">No MUSD trove events for {shortAddress(address)}.</p>}
-          <ol className="mt-3 divide-y divide-ink-4">
+          {chainEvents.data?.events.length === 0 && <p className="mt-3 text-[14px] text-muted">No MUSD trove events for {shortAddress(address)}.</p>}
+          <ol className="mt-3 divide-y divide-line">
             {chainEvents.data?.events.map((e) => (
-              <li key={e.txHash + e.operation} className="flex flex-wrap items-center gap-x-4 gap-y-1 py-2.5 text-[13.5px]">
+              <li key={e.txHash + e.operation} className="flex flex-wrap items-center gap-x-4 gap-y-1 py-2.5 text-[14px]">
                 <span className="min-w-[200px] font-medium">{e.operation}</span>
-                <span className="num text-fg-3">{e.timestamp ? new Date(e.timestamp * 1000).toLocaleString() : `block ${e.blockNumber}`}</span>
+                <span className="num text-muted">{e.timestamp ? new Date(e.timestamp * 1000).toLocaleString() : `block ${e.blockNumber}`}</span>
                 <ExplorerLink hash={e.txHash} className="ml-auto" />
               </li>
             ))}

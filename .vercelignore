@@ -7,3 +7,6 @@ node_modules
 secret.tmp
 cache/
 coverage
+contracts
+deployments
+docs
