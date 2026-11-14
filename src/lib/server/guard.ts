@@ -61,10 +61,17 @@ export async function readGuard(owner: Address): Promise<GuardDTO> {
 // eth_getLogs at 10,000 blocks per call).
 
 const LOG_CHUNK = 9_999n;
-const scan = { to: 0n, owners: new Set<string>(), executions: [] as GuardExecutionDTO[], at: 0 };
+const scan = { to: 0n, owners: new Set<string>(), executions: [] as GuardExecutionDTO[], seen: new Set<string>(), at: 0 };
+let scanning: Promise<void> | null = null;
 const EVENTS = rescueGuardAbi.filter((x) => x.type === "event" && (x.name === "Armed" || x.name === "RescueExecuted"));
 
-async function scanEvents() {
+/** One scan at a time per instance: concurrent requests share it instead of appending the same logs twice. */
+function scanEvents(): Promise<void> {
+  if (!scanning) scanning = scanOnce().finally(() => (scanning = null));
+  return scanning;
+}
+
+async function scanOnce() {
   if (!guardDeployed()) return;
   const c = chainClient();
   const head = await c.getBlockNumber();
@@ -75,7 +82,9 @@ async function scanEvents() {
     for (const l of logs) {
       const a = l.args as Record<string, unknown>;
       if (l.eventName === "Armed") scan.owners.add(getAddress(a.borrower as string));
-      if (l.eventName === "RescueExecuted") {
+      const key = `${l.transactionHash}:${l.logIndex}`;
+      if (l.eventName === "RescueExecuted" && !scan.seen.has(key)) {
+        scan.seen.add(key);
         scan.executions.push({
           owner: getAddress(a.borrower as string),
           keeper: getAddress(a.keeper as string),

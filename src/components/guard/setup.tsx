@@ -115,6 +115,7 @@ export function GuardSetup({ position, guard, onDone, onCancel }: { position: Po
 
   return (
     <div className="flex flex-col gap-5">
+      <div className="self-start">
       <Segmented
         label="Rescue type"
         value={kind}
@@ -127,6 +128,7 @@ export function GuardSetup({ position, guard, onDone, onCancel }: { position: Po
           { value: "addColl", label: "Add BTC" },
         ]}
       />
+      </div>
       <p className="-mt-2 max-w-[68ch] text-[14px] text-ink-soft">
         {kind === "repay"
           ? "Keep an MUSD reserve in RescueGuard. When the trigger is hit, it repays part of your debt. The deposit uses an MUSD permit, so there is no separate approve."
