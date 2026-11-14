@@ -57,7 +57,7 @@ describe("guard plan sizing", () => {
 });
 
 describe("guard plan checks", () => {
-  const ctx = { nowSec: NOW, active: true, position: pos, price: PRICE, params, walletBalance: E(500), reserve: 0n };
+  const ctx: Parameters<typeof checkPlan>[1] = { nowSec: NOW, active: true, position: pos, price: PRICE, params, walletBalance: E(500), reserve: 0n };
   const ok: PlanInput = { kind: "repay", amount: E(150), keeperTip: E(1), triggerIcr: E("1.25"), deadline: NOW + 86_400n };
   const ids = (i: PlanInput, c = ctx) => checkPlan(i, c).filter((x) => x.level === "block").map((x) => x.id);
 

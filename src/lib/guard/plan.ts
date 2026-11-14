@@ -192,9 +192,20 @@ export const PERMIT_TYPES = {
   ],
 } as const;
 
-export function authorizationTypedData(kind: GuardKind, domain: Eip712Domain, m: { amount: bigint; borrower: `0x${string}`; nonce: bigint; deadline: bigint }) {
-  if (kind === "repay") return { domain, types: REPAY_MUSD_TYPES, primaryType: "RepayMUSD" as const, message: { amount: m.amount, borrower: m.borrower, nonce: m.nonce, deadline: m.deadline } };
+type AuthMessage = { amount: bigint; borrower: `0x${string}`; nonce: bigint; deadline: bigint };
+
+export function repayAuthorizationTypedData(domain: Eip712Domain, m: AuthMessage) {
+  return { domain, types: REPAY_MUSD_TYPES, primaryType: "RepayMUSD" as const, message: { amount: m.amount, borrower: m.borrower, nonce: m.nonce, deadline: m.deadline } };
+}
+
+export function addCollAuthorizationTypedData(domain: Eip712Domain, m: AuthMessage) {
   return { domain, types: ADD_COLL_TYPES, primaryType: "AddColl" as const, message: { assetAmount: m.amount, borrower: m.borrower, nonce: m.nonce, deadline: m.deadline } };
+}
+
+export function authorizationTypedData(kind: "repay", domain: Eip712Domain, m: AuthMessage): ReturnType<typeof repayAuthorizationTypedData>;
+export function authorizationTypedData(kind: "addColl", domain: Eip712Domain, m: AuthMessage): ReturnType<typeof addCollAuthorizationTypedData>;
+export function authorizationTypedData(kind: GuardKind, domain: Eip712Domain, m: AuthMessage) {
+  return kind === "repay" ? repayAuthorizationTypedData(domain, m) : addCollAuthorizationTypedData(domain, m);
 }
 
 export function permitTypedData(domain: Eip712Domain, m: { owner: `0x${string}`; spender: `0x${string}`; value: bigint; nonce: bigint; deadline: bigint }) {
