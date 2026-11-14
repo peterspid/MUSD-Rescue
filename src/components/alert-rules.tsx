@@ -26,7 +26,7 @@ export interface RuleRow {
 }
 
 const FREQ_LABEL: Record<AlertFrequency, string> = { every_check: "Every check", once_per_hour: "At most hourly", once_per_day: "At most daily" };
-const selectCls = "h-11 w-full rounded-[var(--radius-control)] border border-line bg-surface px-3 text-[14px] text-ink focus:border-blue focus:outline-none";
+const selectCls = "h-11 w-full min-w-0 rounded-[var(--radius-control)] border border-line-strong bg-paper px-3 text-[15px] text-ink focus:border-blue focus:outline-none";
 
 export function useRules() {
   const session = useSession();
@@ -50,7 +50,7 @@ export function AlertRules({ owner, compact }: { owner?: string; compact?: boole
   if (!session.address) {
     return (
       <div className="well flex flex-wrap items-center gap-3 p-4 text-[14px] text-ink-soft">
-        <KeyRound className="size-4 text-blue" />
+        <KeyRound className="size-4 text-ink" aria-hidden />
         <span className="flex-1">Sign in with your wallet (a free signature, no transaction) to save alert rules.</span>
         <Button size="sm" variant="secondary" loading={session.signingIn} onClick={() => session.signIn()}>
           Sign in
@@ -136,10 +136,10 @@ export function AlertRules({ owner, compact }: { owner?: string; compact?: boole
       </div>
       <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-[14px] text-ink-soft">
         <label className="flex items-center gap-2">
-          <input type="checkbox" checked={browser} onChange={(e) => setBrowser(e.target.checked)} className="accent-[var(--color-blue)]" /> Also show a browser notification while the app is open
+          <input type="checkbox" checked={browser} onChange={(e) => setBrowser(e.target.checked)} className="size-4 accent-[var(--color-blue)]" /> Also show a browser notification while the app is open
         </label>
         <label className="flex items-center gap-2">
-          <input type="checkbox" checked={quietOn} onChange={(e) => setQuietOn(e.target.checked)} className="accent-[var(--color-blue)]" /> Quiet hours
+          <input type="checkbox" checked={quietOn} onChange={(e) => setQuietOn(e.target.checked)} className="size-4 accent-[var(--color-blue)]" /> Quiet hours
         </label>
         {quietOn && (
           <span className="flex items-center gap-2">
@@ -159,7 +159,7 @@ export function AlertRules({ owner, compact }: { owner?: string; compact?: boole
       <div className="overflow-x-auto">
         <table className="w-full min-w-[560px] text-left text-[14px]">
           <thead>
-            <tr className="text-[12px] text-muted">
+            <tr className="text-[13px] text-muted">
               {!owner && <th className="py-2 font-normal">Trove</th>}
               <th className="py-2 font-normal">Condition</th>
               <th className="py-2 font-normal">Frequency</th>
@@ -179,11 +179,11 @@ export function AlertRules({ owner, compact }: { owner?: string; compact?: boole
             )}
             {list.map((r) => (
               <tr key={r.id} className="border-t border-line">
-                {!owner && <td className="num py-2.5">{shortAddress(r.trove_owner)}</td>}
+                {!owner && <td className="addr py-2.5">{shortAddress(r.trove_owner)}</td>}
                 <td className="py-2.5">
                   {ALERT_KINDS[r.kind].describe(r.threshold)}
-                  {r.quiet_start != null && <span className="ml-2 text-[12px] text-muted">quiet {r.quiet_start}:00–{r.quiet_end}:00</span>}
-                  {r.channel === "in_app_browser" && <span className="ml-2 text-[12px] text-muted">+ browser</span>}
+                  {r.quiet_start != null && <span className="ml-2 text-[13px] text-muted">quiet {r.quiet_start}:00–{r.quiet_end}:00</span>}
+                  {r.channel === "in_app_browser" && <span className="ml-2 text-[13px] text-muted">+ browser</span>}
                 </td>
                 <td className="py-2.5 text-ink-soft">{FREQ_LABEL[r.frequency]}</td>
                 <td className="num py-2.5 text-muted">{r.last_evaluated_at ? new Date(r.last_evaluated_at).toLocaleString() : "never"}</td>
@@ -193,7 +193,7 @@ export function AlertRules({ owner, compact }: { owner?: string; compact?: boole
                     type="checkbox"
                     aria-label="Enabled"
                     checked={r.enabled}
-                    className="accent-[var(--color-blue)]"
+                    className="size-4 accent-[var(--color-blue)]"
                     onChange={async (e) => {
                       await api(`/api/alerts/${r.id}`, { method: "PATCH", json: { enabled: e.target.checked } }).catch((er) => toast.error((er as Error).message));
                       qc.invalidateQueries({ queryKey: ["rules"] });

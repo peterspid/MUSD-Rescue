@@ -44,25 +44,25 @@ export default function RadarPage() {
       </section>
       <section className="grid grid-cols-1 gap-5 lg:grid-cols-2">
         <div className="panel p-5">
-          <h2 className="text-lg font-semibold">Troves by collateral ratio</h2>
+          <h2 className="text-[16px] font-semibold">Troves by collateral ratio</h2>
           <div className="mt-3">
             <RadarHistogram troves={data.troves} />
           </div>
         </div>
         <div className="panel p-5">
-          <h2 className="text-lg font-semibold">Debt that becomes liquidatable as BTC falls</h2>
+          <h2 className="text-[16px] font-semibold">Debt that becomes liquidatable as BTC falls</h2>
           <div className="mt-3">{data.system.price && <LiquidationCurve troves={data.troves} price={BigInt(data.system.price)} />}</div>
         </div>
       </section>
       <section className="panel p-5">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2 className="text-lg font-semibold">Riskiest troves</h2>
+          <h2 className="text-[16px] font-semibold">Riskiest troves</h2>
           <Segmented label="Rows" value={show} onChange={setShow} options={[{ value: "25", label: "25" }, { value: "100", label: "100" }, { value: "all", label: "All" }]} />
         </div>
         <div className="mt-3 overflow-x-auto">
           <table className="w-full min-w-[720px] text-left text-[14px]">
             <thead>
-              <tr className="text-[12px] text-muted">
+              <tr className="text-[13px] text-muted">
                 <th className="py-2 font-normal">#</th>
                 <th className="py-2 font-normal">Owner</th>
                 <th className="py-2 font-normal">Status</th>
@@ -79,7 +79,7 @@ export default function RadarPage() {
                 return (
                   <tr key={t.owner} className="border-t border-line">
                     <td className="num py-2 text-muted">{i + 1}</td>
-                    <td className="py-2"><Link className="num text-blue hover:underline" href={`/positions/${t.owner}`}>{shortAddress(t.owner, 5)}</Link></td>
+                    <td className="py-2"><Link className="addr text-blue underline-offset-4 hover:underline" href={`/positions/${t.owner}`}>{shortAddress(t.owner, 5)}</Link></td>
                     <td className="py-2"><RiskBadge category={classifyRisk(hf, session.thresholds)} size="sm" /></td>
                     <td className="num py-2">{formatRatioPct(t.icr ? BigInt(t.icr) : null)}</td>
                     <td className="num py-2">{formatBtc(BigInt(t.coll))}</td>

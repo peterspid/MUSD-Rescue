@@ -75,7 +75,7 @@ export default function ActivityPage() {
       {session.address && (
         <section className="panel p-5 sm:p-6">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <h2 className="text-lg font-semibold">Verified rescue transactions</h2>
+            <h2 className="text-[16px] font-semibold">Verified rescue transactions</h2>
             {!!q.data?.transactions.length && (
               <Button
                 size="sm"
@@ -98,7 +98,7 @@ export default function ActivityPage() {
             {!!q.data?.transactions.length && (
               <table className="w-full min-w-[640px] text-left text-[14px]">
                 <thead>
-                  <tr className="text-[12px] text-muted">
+                  <tr className="text-[13px] text-muted">
                     <th className="py-2 font-normal">Action</th>
                     <th className="py-2 font-normal">Amount</th>
                     <th className="py-2 font-normal">Status</th>
@@ -116,7 +116,7 @@ export default function ActivityPage() {
                         {BigInt(t.coll_amount) > 0n && <div>{formatBtc(BigInt(t.coll_amount))} BTC</div>}
                       </td>
                       <td className="py-2.5">
-                        <span className={t.status === "confirmed" ? "text-blue" : "text-ink"}>{t.status}</span> <SourceTag kind="onchain" className="ml-1" />
+                        <span className={t.status === "confirmed" ? "text-blue" : "font-semibold text-ink"}>{t.status}</span> <SourceTag kind="onchain" className="ml-1" />
                       </td>
                       <td className="num py-2.5">{formatRatioPct(t.icr_before ? BigInt(t.icr_before) : undefined, 2)} → {formatRatioPct(t.icr_after ? BigInt(t.icr_after) : undefined, 2)}</td>
                       <td className="num py-2.5">{Number(t.block_number).toLocaleString("en-US")}</td>
@@ -132,7 +132,7 @@ export default function ActivityPage() {
 
       {session.address && (
         <section className="panel p-5 sm:p-6">
-          <h2 className="text-lg font-semibold">Event log</h2>
+          <h2 className="text-[16px] font-semibold">Event log</h2>
           {q.isLoading && <Skeleton className="mt-4 h-24" />}
           {q.data && events.length === 0 && <p className="mt-3 text-[14px] text-muted">Nothing here yet.</p>}
           <ol className="mt-3 divide-y divide-line">
@@ -141,7 +141,7 @@ export default function ActivityPage() {
                 <SourceTag kind={e.category === "onchain" ? "onchain" : "offchain"} />
                 <span className="min-w-[160px] text-muted">{KIND_LABEL[e.kind] ?? e.kind}</span>
                 <span className="flex-1 text-ink">{e.title}</span>
-                {e.trove_owner && <span className="num text-muted">{shortAddress(e.trove_owner)}</span>}
+                {e.trove_owner && <span className="addr text-muted">{shortAddress(e.trove_owner)}</span>}
                 {e.tx_hash && <ExplorerLink hash={e.tx_hash} />}
                 <span className="num text-[12px] text-muted">{new Date(e.created_at).toLocaleString()}</span>
               </li>
@@ -153,7 +153,7 @@ export default function ActivityPage() {
       {address && (
         <section className="panel p-5 sm:p-6">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold">Protocol log for your trove</h2>
+            <h2 className="text-[16px] font-semibold">Protocol log for your trove</h2>
             <SourceTag kind="onchain" />
           </div>
           {chainEvents.data?.events.length === 0 && <p className="mt-3 text-[14px] text-muted">No MUSD trove events for {shortAddress(address)}.</p>}

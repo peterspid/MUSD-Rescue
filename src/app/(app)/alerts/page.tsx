@@ -88,7 +88,7 @@ export default function AlertsPage() {
             Last successful run: <span className="num">{cronOkAt ? new Date(cronOkAt).toLocaleString() : "not yet"}</span>
           </div>
           <div className="mt-2"><FreshnessPill freshness={assessFreshness(cronOkAt, Date.now(), MONITOR_POLICY)} /></div>
-          {status.data?.lastCron && !status.data.lastCron.ok && <p className="mt-2 text-[13px] text-ink">Last run failed: {status.data.lastCron.error ?? "unknown error"}</p>}
+          {status.data?.lastCron && !status.data.lastCron.ok && <p className="mt-2 text-[13px] font-medium text-ink">Last run failed: {status.data.lastCron.error ?? "unknown error"}</p>}
         </div>
         <div className="panel p-5">
           <div className="text-[13px] text-muted">Last successful check (any source)</div>
@@ -118,7 +118,7 @@ export default function AlertsPage() {
       </section>
 
       <section className="panel p-5 sm:p-6">
-        <h2 className="text-lg font-semibold">Rules</h2>
+        <h2 className="text-[16px] font-semibold">Rules</h2>
         <div className="mt-4">
           <AlertRules />
         </div>
@@ -127,7 +127,7 @@ export default function AlertsPage() {
       {session.address && (
         <section className="panel p-5 sm:p-6">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold">Inbox</h2>
+            <h2 className="text-[16px] font-semibold">Inbox</h2>
             {(notes.data?.unread ?? 0) > 0 && (
               <Button size="sm" variant="ghost" onClick={async () => { await api("/api/notifications", { method: "POST", json: { all: true } }); qc.invalidateQueries({ queryKey: ["notifications"] }); }}>
                 Mark all read
@@ -137,13 +137,13 @@ export default function AlertsPage() {
           {!notes.data?.notifications.length && <p className="mt-3 text-[14px] text-muted">No notifications yet.</p>}
           <ul className="mt-3 divide-y divide-line">
             {notes.data?.notifications.map((n) => (
-              <li key={n.id} className={cn("flex flex-wrap gap-x-4 gap-y-1 py-3", !n.read_at && "")}>
-                <span className="mt-1.5 size-2 shrink-0 rounded-full" style={{ background: n.severity === "critical" ? "var(--color-ink)" : n.severity === "warning" ? "var(--color-ink)" : "var(--color-blue)" }} aria-hidden />
+              <li key={n.id} className={cn("flex flex-wrap gap-x-4 gap-y-1 py-3", !n.read_at && "border-l-2 border-l-blue pl-3")}>
+                <span className={cn("mt-1.5 size-2 shrink-0 rounded-full", n.severity === "critical" ? "bg-ink" : n.severity === "warning" ? "border-2 border-ink" : "bg-blue")} aria-hidden />
                 <div className="min-w-0 flex-1">
-                  <div className="font-medium">{n.title} <span className="text-[12px] font-normal text-muted">{n.severity}{n.quiet ? ", quiet hours" : ""}{!n.read_at ? ", unread" : ""}</span></div>
+                  <div className="font-medium">{n.title} <span className="text-[13px] font-normal text-muted">{n.severity}{n.quiet ? ", quiet hours" : ""}{!n.read_at ? ", unread" : ""}</span></div>
                   <p className="text-[14px] text-ink-soft">{n.body}</p>
                 </div>
-                <div className="num text-right text-[12px] text-muted">
+                <div className="num text-right text-[13px] text-muted">
                   {new Date(n.created_at).toLocaleString()}
                   <br />
                   {n.trove_owner ? shortAddress(n.trove_owner) : ""} via {n.source.replace("_", " ")}

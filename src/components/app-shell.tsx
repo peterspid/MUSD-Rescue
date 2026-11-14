@@ -133,7 +133,7 @@ function NotificationsBell() {
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} aria-hidden />
           <div className="panel absolute right-0 z-50 mt-2 max-h-[70vh] w-[min(380px,calc(100vw-24px))] overflow-auto p-2">
             <div className="flex items-center justify-between px-2 py-1.5">
-              <span className="text-sm font-medium">Notifications</span>
+              <span className="text-[14px] font-medium">Notifications</span>
               {unread > 0 && (
                 <button
                   className="text-[13px] text-blue hover:underline"
@@ -146,10 +146,10 @@ function NotificationsBell() {
                 </button>
               )}
             </div>
-            {!data?.notifications.length && <p className="px-2 py-4 text-sm text-muted">No alerts yet. Create rules on the Alerts page.</p>}
+            {!data?.notifications.length && <p className="px-2 py-4 text-[14px] text-muted">No alerts yet. Create rules on the Alerts page.</p>}
             {data?.notifications.slice(0, 20).map((n) => (
               <div key={n.id} className={cn("rounded-md px-2 py-2", !n.read_at && "bg-surface")}>
-                <div className="flex items-center gap-2 text-sm">
+                <div className="flex items-center gap-2 text-[14px]">
                   <span className={cn("size-2 shrink-0 rounded-full", n.severity === "critical" ? "bg-ink" : n.severity === "warning" ? "border-2 border-ink" : "bg-blue")} aria-hidden />
                   <span className="sr-only">{n.severity}</span>
                   <span className="font-medium">{n.title}</span>
@@ -210,7 +210,7 @@ export function CommandPalette() {
               <Command.Input value={q} onValueChange={setQ} placeholder="Jump to a page, or paste any 0x address to watch…" className="h-12 flex-1 bg-transparent text-[15px] outline-none placeholder:text-muted" />
             </div>
             <Command.List className="max-h-[50vh] overflow-auto p-2 [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-[12px] [&_[cmdk-group-heading]]:text-muted">
-              <Command.Empty className="px-3 py-6 text-sm text-muted">Nothing matches.</Command.Empty>
+              <Command.Empty className="px-3 py-6 text-[14px] text-muted">Nothing matches.</Command.Empty>
               {validAddr && (
                 <Command.Group heading="Address">
                   <Item onSelect={() => go(`/positions/${addr}`)}>Watch {addr.slice(0, 10)}… (read-only)</Item>
@@ -270,7 +270,7 @@ export function CommandPalette() {
 
 function Item({ children, onSelect }: { children: ReactNode; onSelect: () => void }) {
   return (
-    <Command.Item onSelect={onSelect} className="cursor-pointer rounded-md px-3 py-2 text-sm text-ink-soft data-[selected=true]:bg-surface data-[selected=true]:text-ink">
+    <Command.Item onSelect={onSelect} className="cursor-pointer rounded-md px-3 py-2 text-[14px] text-ink-soft data-[selected=true]:bg-surface data-[selected=true]:text-ink">
       {children}
     </Command.Item>
   );

@@ -50,7 +50,7 @@ export function PriceHistoryChart({ data, range, reference }: { data: HistoryRes
     }
     return rows;
   }, [data, reference]);
-  if (!points.length) return <p className="text-sm text-muted">No oracle history could be read for this range.</p>;
+  if (!points.length) return <p className="text-[14px] text-muted">No oracle history could be read for this range.</p>;
   return (
     <figure>
       <div className="h-[220px] w-full">
