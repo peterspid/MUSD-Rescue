@@ -1,0 +1,9 @@
+node_modules
+.next
+.env*
+!.env.example
+*.pem
+*.key
+secret.tmp
+cache/
+coverage
