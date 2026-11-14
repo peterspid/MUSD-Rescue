@@ -8,7 +8,7 @@ import { getAddress, type Address, type Hex } from "viem";
 import { getBlock, getPublicClient, readContract, signTypedData, waitForTransactionReceipt, writeContract } from "wagmi/actions";
 import { wagmiConfig } from "@/config/wagmi";
 import { mezoTestnet } from "@/config/chains";
-import { MUSD_CONTRACTS } from "@/config/contracts";
+import { ABIS, GAS_FLOORS, MUSD_CONTRACTS } from "@/config/contracts";
 import { RESCUE_GUARD, rescueGuardAbi } from "@/config/guard";
 import { GUARD_GAS_FLOORS, MEZO_POOLS, SWAP_ROUTE_BTC_TO_MUSD, borrowerOperationsSignaturesAbi, erc20Abi, mezoRouterAbi, musdPermitAbi } from "@/config/pools";
 import { computeGasLimit } from "../rescue/gas";
@@ -203,4 +203,38 @@ export async function waitForSuccess(hash: Hex) {
   const rc = await waitForTransactionReceipt(wagmiConfig, { hash, chainId: CHAIN_ID, pollingInterval: 2_000, timeout: 180_000 });
   if (rc.status !== "success") throw new Error("The transaction reverted on-chain. Nothing changed except the gas fee.");
   return rc;
+}
+
+// ---------------------------------------------------------------------------------------------
+// Open a trove (testnet onboarding: faucet BTC to a protected trove without leaving the app).
+
+/** Exact SortedTroves hints for a nominal ICR, read from HintHelpers + SortedTroves (falls back to zero hints). */
+async function hintsForNicr(nicr: bigint): Promise<readonly [Address, Address]> {
+  const zero = "0x0000000000000000000000000000000000000000" as Address;
+  try {
+    const A = MUSD_CONTRACTS.testnet;
+    const size = await pc().readContract({ address: A.SortedTroves, abi: ABIS.SortedTroves, functionName: "getSize" });
+    const trials = BigInt(Math.max(1, Math.ceil(15 * Math.sqrt(Number(size)))));
+    const [approx] = await pc().readContract({ address: A.HintHelpers, abi: ABIS.HintHelpers, functionName: "getApproxHint", args: [nicr, trials, BigInt(Date.now())] });
+    const [upper, lower] = await pc().readContract({ address: A.SortedTroves, abi: ABIS.SortedTroves, functionName: "findInsertPosition", args: [nicr, approx, approx] });
+    return [upper, lower];
+  } catch {
+    return [zero, zero]; // the protocol still finds the position on-chain; it just costs more gas
+  }
+}
+
+/**
+ * BorrowerOperations.openTrove: lock `collateral` BTC and borrow `debtAmount` MUSD. The trove's principal is
+ * debtAmount + borrowing fee + gas compensation; hints use that principal (the sorted list ignores interest).
+ */
+export async function openTrove(opts: { owner: string; collateral: bigint; debtAmount: bigint; borrowingRate: bigint; gasCompensation: bigint }): Promise<Hex> {
+  const owner = getAddress(opts.owner);
+  const fee = (opts.debtAmount * opts.borrowingRate) / 10n ** 18n;
+  const principal = opts.debtAmount + fee + opts.gasCompensation;
+  const [upper, lower] = await hintsForNicr((opts.collateral * 10n ** 20n) / principal);
+  const A = MUSD_CONTRACTS.testnet;
+  return simulateAndWrite(
+    { address: A.BorrowerOperations, abi: ABIS.BorrowerOperations, functionName: "openTrove", args: [opts.debtAmount, upper, lower], value: opts.collateral, account: owner, chainId: CHAIN_ID },
+    GAS_FLOORS.openTrove,
+  );
 }

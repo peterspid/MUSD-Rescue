@@ -94,4 +94,6 @@ export const GAS_FLOORS = {
   addColl: 450_000n,
   adjustTrove: 550_000n,
   closeTrove: 450_000n,
+  /** openTrove inserts into SortedTroves and mints; estimates run ~0.6-0.9M with exact hints */
+  openTrove: 1_600_000n,
 } as const;

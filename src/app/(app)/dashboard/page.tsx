@@ -1,5 +1,6 @@
 "use client";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import { OpenTroveDialog } from "@/components/open-trove-dialog";
 import Link from "next/link";
 import { useAccount } from "wagmi";
 import { useQueries } from "@tanstack/react-query";
@@ -19,6 +20,7 @@ export default function DashboardPage() {
   const { address, isConnected } = useAccount();
   const session = useSession();
   const sys = useSystem();
+  const [openTrove, setOpenTrove] = useState(false);
   const owners = useMemo(() => {
     const list = [...(address ? [address] : []), ...session.watchlist];
     return list.filter((a, i) => list.findIndex((b) => b.toLowerCase() === a.toLowerCase()) === i);
@@ -81,7 +83,13 @@ export default function DashboardPage() {
         <EmptyState icon={<Wallet className="size-7" />} title={`No open MUSD trove for ${shortAddress(address)}`}>
           <p>This wallet has no active trove on Mezo testnet ({own.statusLabel.toLowerCase()}), so there is nothing to liquidate or rescue. Next steps:</p>
           <ul className="mt-3 list-disc space-y-1 pl-5">
-            <li>Open a trove (borrow MUSD against BTC) in the official Mezo app, then come back. <a href="https://mezo.org" target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-blue underline-offset-4 hover:underline">mezo.org <ExternalLink className="size-3" /></a></li>
+            <li>
+              Open a trove here: lock testnet BTC and borrow MUSD, then protect it with Rescue Guard.{" "}
+              <button type="button" className="font-semibold text-blue underline-offset-4 hover:underline" onClick={() => setOpenTrove(true)}>
+                Open a trove
+              </button>{" "}
+              (or use the official Mezo app at <a href="https://mezo.org" target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-blue underline-offset-4 hover:underline">mezo.org <ExternalLink className="size-3" /></a>).
+            </li>
             <li>Get testnet BTC for gas from the <a href="https://faucet.test.mezo.org/" target="_blank" rel="noreferrer" className="text-blue underline-offset-4 hover:underline">Mezo faucet</a>.</li>
             <li>Watch another trove read-only, or try the <Link href="/demo" className="text-blue underline-offset-4 hover:underline">demo with example troves</Link>.</li>
           </ul>
@@ -129,6 +137,7 @@ export default function DashboardPage() {
           <WatchInput className="mt-3 max-w-[560px]" compact />
         </section>
       )}
+      <OpenTroveDialog open={openTrove} onOpenChange={setOpenTrove} />
     </div>
   );
 }
