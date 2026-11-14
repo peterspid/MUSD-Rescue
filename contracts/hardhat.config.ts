@@ -13,6 +13,17 @@ const config: HardhatUserConfig = {
     },
   },
   networks: {
+    // FORK=1 forks Mezo testnet so test/fork runs against the real MUSD protocol contracts.
+    hardhat:
+      process.env.FORK === "1"
+        ? {
+            chainId: 31611,
+            forking: { url: "https://rpc.test.mezo.org" },
+            hardfork: "cancun",
+            blockGasLimit: 30_000_000,
+            chains: { 31611: { hardforkHistory: { cancun: 0 } } },
+          }
+        : {},
     mezotestnet: { url: "https://rpc.test.mezo.org", chainId: 31611 },
   },
   etherscan: {
@@ -26,7 +37,7 @@ const config: HardhatUserConfig = {
     ],
   },
   sourcify: { enabled: false },
-  mocha: { timeout: 120000 },
+  mocha: { timeout: process.env.FORK === "1" ? 900000 : 120000 },
 };
 
 export default config;
