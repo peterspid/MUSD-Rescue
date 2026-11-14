@@ -1,0 +1,136 @@
+{
+  "ranAt": "2026-11-14T14:59:07.569Z",
+  "baseUrl": "https://musd-rescue.vercel.app",
+  "database": "Neon Postgres (….c-14.us-east-1.aws.neon.tech), schema \"rescue\"",
+  "wallet": "0x679D52E30B45cEF4C6B6AFec792DC3252FcF5745",
+  "rowsBefore": {
+    "activity": 12,
+    "alert_rules": 0,
+    "monitor_runs": 24,
+    "notifications": 4,
+    "oracle_snapshots": 62,
+    "rescue_txs": 2,
+    "siwe_nonces": 8,
+    "trove_snapshots": 32,
+    "users": 2,
+    "watchlist": 0
+  },
+  "rowsAfter": {
+    "activity": 15,
+    "alert_rules": 0,
+    "monitor_runs": 25,
+    "notifications": 5,
+    "oracle_snapshots": 63,
+    "rescue_txs": 3,
+    "siwe_nonces": 1,
+    "trove_snapshots": 33,
+    "users": 3,
+    "watchlist": 1
+  },
+  "passed": 22,
+  "total": 22,
+  "results": [
+    {
+      "step": "Neon schema 'rescue' has all 10 tables",
+      "ok": true,
+      "detail": "10 tables on ….c-14.us-east-1.aws.neon.tech"
+    },
+    {
+      "step": "live /api/health reports db ok",
+      "ok": true,
+      "detail": "rpc ok, chain 31611"
+    },
+    {
+      "step": "SIWE sign-in (nonce stored + consumed, user row, session cookie)",
+      "ok": true
+    },
+    {
+      "step": "used nonce is rejected on replay",
+      "ok": true,
+      "detail": "HTTP 401"
+    },
+    {
+      "step": "session reads back from the database",
+      "ok": true
+    },
+    {
+      "step": "watchlist: add a trove and read it back",
+      "ok": true,
+      "detail": "HTTP 201"
+    },
+    {
+      "step": "settings: save preferences and read them back",
+      "ok": true,
+      "detail": "HTTP 200"
+    },
+    {
+      "step": "alerts: create a rule",
+      "ok": true,
+      "detail": "HTTP 201, rule 5"
+    },
+    {
+      "step": "Check now: monitor run evaluates the rule against the live trove",
+      "ok": true,
+      "detail": "rules 1, alerts fired 1, block 16777481"
+    },
+    {
+      "step": "notifications: read the inbox",
+      "ok": true,
+      "detail": "1 notification(s), 1 unread"
+    },
+    {
+      "step": "monitoring status: last runs come from the database",
+      "ok": true,
+      "detail": "{\"schedule\":{\"cron\":\"0 6 * * *\",\"description\":\"Once per day at 06:00 UTC (Vercel Hobby cron limit). Also on every visit while the app is ope"
+    },
+    {
+      "step": "rescue record: verify an on-chain repayment and store it once",
+      "ok": true,
+      "detail": "HTTP 201 (recorded now), ICR 1551879002248349767 -> 1555745358693963117"
+    },
+    {
+      "step": "same tx hash is never double counted",
+      "ok": true,
+      "detail": "HTTP 200"
+    },
+    {
+      "step": "activity log reads back on-chain and app events",
+      "ok": true,
+      "detail": "3 entries, ? verified rescue(s)"
+    },
+    {
+      "step": "alerts: delete the test rule",
+      "ok": true,
+      "detail": "HTTP 200"
+    },
+    {
+      "step": "sign out",
+      "ok": true,
+      "detail": "HTTP 200"
+    },
+    {
+      "step": "db row: users",
+      "ok": true
+    },
+    {
+      "step": "db row: watchlist",
+      "ok": true
+    },
+    {
+      "step": "db rows: monitor_runs for this user",
+      "ok": true
+    },
+    {
+      "step": "db row: rescue_txs (unique tx hash)",
+      "ok": true
+    },
+    {
+      "step": "db rows: activity for this user",
+      "ok": true
+    },
+    {
+      "step": "db rows: oracle snapshots recorded by monitoring",
+      "ok": true
+    }
+  ]
+}
