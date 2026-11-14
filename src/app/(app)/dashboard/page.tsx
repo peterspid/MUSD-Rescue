@@ -12,7 +12,7 @@ import { PositionCard, derivedRisk } from "@/components/position-card";
 import { useSession } from "@/components/session";
 import { ConnectButton, WalletHelpers } from "@/components/wallet";
 import { WatchInput } from "@/components/watch-input";
-import { Button, EmptyState, ErrorState, SectionHeading, Skeleton, Stat, CATEGORY_COLOR, FreshnessPill } from "@/components/ui";
+import { Button, EmptyState, ErrorState, SectionHeading, Skeleton, Stat, CATEGORY_COLOR, FreshnessPill, ButtonLink } from "@/components/ui";
 import { assessFreshness } from "@/lib/risk/freshness";
 
 export default function DashboardPage() {
@@ -55,7 +55,7 @@ export default function DashboardPage() {
       />
 
       {owners.length === 0 && (
-        <EmptyState icon={<Wallet className="size-7" />} title="Connect a wallet or watch a trove" action={<div className="flex flex-wrap gap-2"><ConnectButton /><Link href="/demo"><Button variant="secondary"><FlaskConical className="size-4" /> Explore the demo</Button></Link></div>}>
+        <EmptyState icon={<Wallet className="size-7" />} title="Connect a wallet or watch a trove" action={<div className="flex flex-wrap gap-2"><ConnectButton /><ButtonLink href="/demo" variant="secondary"><FlaskConical className="size-4" /> Explore the demo</ButtonLink></div>}>
           <p>MUSD Rescue reads MUSD troves directly from the protocol contracts on Mezo testnet. Connect the wallet that owns a trove, or watch any address read-only.</p>
           <WatchInput className="mt-4 max-w-[560px]" />
         </EmptyState>

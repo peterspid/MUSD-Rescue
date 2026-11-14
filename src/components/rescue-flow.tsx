@@ -168,14 +168,14 @@ export function RescueDialog({ flow, onClose }: { flow: ReturnType<typeof useRes
   return (
     <Dialog.Root open={open} onOpenChange={(o) => !o && canClose && onClose()}>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-50 bg-paper " />
+        <Dialog.Overlay className="fixed inset-0 z-50 bg-ink/40" />
         <Dialog.Content
           className="panel fixed left-1/2 top-1/2 z-50 max-h-[92dvh] w-[min(620px,calc(100vw-24px))] -translate-x-1/2 -translate-y-1/2 overflow-y-auto p-5 sm:p-6"
           onEscapeKeyDown={(e) => !canClose && e.preventDefault()}
           onPointerDownOutside={(e) => e.preventDefault()}
         >
           <div className="flex items-start justify-between gap-3">
-            <Dialog.Title className="text-xl font-semibold">
+            <Dialog.Title className="text-[20px] font-semibold">
               {state.s === "review" ? "Confirm rescue transaction" : state.s === "verified" ? "Rescue verified" : "Rescue transaction"}
             </Dialog.Title>
             {canClose && (
@@ -189,8 +189,8 @@ export function RescueDialog({ flow, onClose }: { flow: ReturnType<typeof useRes
           {p && (state.s === "review" || state.s === "awaiting-signature") && (
             <div className="mt-4 flex flex-col gap-4">
               {worsened?.worsened && (
-                <div role="alert" className="flex gap-2 rounded-md border border-ink bg-surface px-3 py-2.5 text-[14px]">
-                  <ShieldAlert className="mt-0.5 size-4 shrink-0 text-ink" />
+                <div role="alert" className="flex gap-2 rounded-[var(--radius-control)] border-2 border-ink px-3 py-2.5 text-[14px] font-medium">
+                  <ShieldAlert className="mt-0.5 size-4 shrink-0 text-ink" aria-hidden />
                   <span>
                     Your position got riskier since you opened the simulator (collateral ratio {formatRatioPct(BigInt(state.tx.icrBefore!))}, change {Number(worsened.deltaBps) / 100}%). The amounts below were re-checked at the latest block.
                   </span>
@@ -206,7 +206,7 @@ export function RescueDialog({ flow, onClose }: { flow: ReturnType<typeof useRes
                   {p.contract.name} <ExplorerLink address={p.contract.address}>{shortAddress(p.contract.address, 6)}</ExplorerLink>
                 </dd>
                 <dt className="text-muted">Function</dt>
-                <dd className="num">{p.functionName}()</dd>
+                <dd className="addr">{p.functionName}()</dd>
                 {repay > 0n && (
                   <>
                     <dt className="text-muted">Repay</dt>
@@ -235,26 +235,26 @@ export function RescueDialog({ flow, onClose }: { flow: ReturnType<typeof useRes
                   block {Number(p.blockNumber).toLocaleString("en-US")}, oracle ${formatAmount(BigInt(p.price))}; eth_call simulation passed
                 </dd>
               </dl>
-              <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 rounded-[var(--radius-control)] border border-line bg-surface p-4">
+              <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 rounded-[var(--radius-control)] bg-surface p-4">
                 <div>
-                  <div className="text-[12px] text-muted">Before</div>
-                  <div className="num text-xl">{formatRatioPct(p.before.icr ? BigInt(p.before.icr) : null)}</div>
-                  <div className="mt-1 flex items-center gap-2 text-[13px] text-muted">
+                  <div className="text-[13px] text-muted">Before</div>
+                  <div className="num text-[20px] font-medium">{formatRatioPct(p.before.icr ? BigInt(p.before.icr) : null)}</div>
+                  <div className="mt-1 flex flex-wrap items-center gap-2 text-[13px] text-muted">
                     HF <span className="num">{formatHF(p.before.hf ? BigInt(p.before.hf) : null)}</span> <RiskBadge category={p.before.category} size="sm" />
                   </div>
                 </div>
                 <ArrowRight className="size-5 text-muted" />
                 <div>
-                  <div className="text-[12px] text-muted">Expected after</div>
-                  <div className="num simulated text-xl">{formatRatioPct(p.after.icr ? BigInt(p.after.icr) : null)}</div>
-                  <div className="mt-1 flex items-center gap-2 text-[13px] text-muted">
+                  <div className="text-[13px] text-muted">Expected after</div>
+                  <div className="num simulated text-[20px] font-medium">{formatRatioPct(p.after.icr ? BigInt(p.after.icr) : null)}</div>
+                  <div className="mt-1 flex flex-wrap items-center gap-2 text-[13px] text-muted">
                     HF <span className="num">{formatHF(p.after.hf ? BigInt(p.after.hf) : null)}</span> <RiskBadge category={p.after.category} size="sm" />
                   </div>
                 </div>
               </div>
               {p.checks.filter((c) => c.level === "warn").map((c) => (
-                <p key={c.id} className="flex gap-2 text-[13px] text-ink">
-                  <TriangleAlert className="mt-0.5 size-4 shrink-0" /> {c.message}
+                <p key={c.id} className="flex gap-2 text-[14px] font-medium text-ink">
+                  <TriangleAlert className="mt-0.5 size-4 shrink-0" aria-hidden /> {c.message}
                 </p>
               ))}
               <p className="text-[13px] text-muted">
@@ -262,7 +262,7 @@ export function RescueDialog({ flow, onClose }: { flow: ReturnType<typeof useRes
               </p>
               <div className="flex flex-wrap items-center justify-end gap-2">
                 {secondsLeft != null && (
-                  <span className={cn("num mr-auto flex items-center gap-1 text-[13px]", secondsLeft < 15 ? "text-ink" : "text-muted")}>
+                  <span className={cn("num mr-auto flex items-center gap-1 text-[13px]", secondsLeft < 15 ? "font-semibold text-ink" : "text-muted")}>
                     <Clock className="size-3.5" /> quote valid {secondsLeft}s
                   </span>
                 )}
@@ -288,14 +288,14 @@ export function RescueDialog({ flow, onClose }: { flow: ReturnType<typeof useRes
                 </div>
               </div>
               <ExplorerLink hash={state.hash}>View transaction on the Mezo explorer</ExplorerLink>
-              {state.s === "pending" && state.walletDisconnected && <p className="text-[13px] text-ink">Wallet disconnected — the transaction was already broadcast, tracking continues.</p>}
+              {state.s === "pending" && state.walletDisconnected && <p className="text-[14px] font-medium text-ink">Wallet disconnected. The transaction was already broadcast, so tracking continues.</p>}
             </div>
           )}
 
           {state.s === "verified" && (
             <div className="mt-5 flex flex-col gap-3">
               <div className="flex items-center gap-3">
-                <CircleCheck className="size-7 text-blue" />
+                <CircleCheck className="size-7 shrink-0 text-blue" aria-hidden />
                 <div>
                   <div className="font-medium">Confirmed on-chain and re-read from the protocol</div>
                   <div className="text-[13px] text-muted">{result?.recorded ? "Verified by the server from the receipt and saved to your activity log." : "Sign in to keep a verified history of your rescues."}</div>
@@ -318,7 +318,7 @@ export function RescueDialog({ flow, onClose }: { flow: ReturnType<typeof useRes
           {(state.s === "rejected" || state.s === "failed" || state.s === "reverted" || state.s === "disconnected" || state.s === "blocked" || state.s === "approval-rejected") && (
             <div className="mt-5 flex flex-col gap-3">
               <div className="flex items-start gap-3">
-                <CircleX className="size-7 shrink-0 text-ink" />
+                <CircleX className="size-7 shrink-0 text-ink" aria-hidden />
                 <div>
                   <div className="font-medium">
                     {state.s === "rejected" ? "Rejected in wallet" : state.s === "reverted" ? "Transaction reverted" : state.s === "disconnected" ? "Wallet disconnected" : state.s === "blocked" ? "Wrong network" : state.s === "approval-rejected" ? "Approval rejected" : "Could not complete"}

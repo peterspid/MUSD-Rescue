@@ -1,12 +1,12 @@
 "use client";
 import Link from "next/link";
-import { ArrowRight, X } from "lucide-react";
+import { X } from "lucide-react";
 import type { PositionDTO } from "@/lib/dto";
 import { assessPosition, recommend } from "@/lib/risk";
 import { amountsFromDTO, paramsFromDTO } from "@/lib/convert";
 import type { RiskThresholds } from "@/lib/risk/health";
 import { formatAmount, formatBps, formatBtc, formatHF, formatRatioPct, formatUsd, shortAddress } from "@/lib/risk/format";
-import { Button, CATEGORY_COLOR, RiskBadge, SourceTag, cn } from "./ui";
+import { ButtonLink, CATEGORY_COLOR, Recommendation, RiskBadge, SourceTag } from "./ui";
 import { ClearanceGauge } from "./clearance";
 
 export function derivedRisk(p: PositionDTO, thresholds: RiskThresholds) {
@@ -25,16 +25,16 @@ export function PositionCard({ p, thresholds, mine, onRemove }: { p: PositionDTO
           <div className="flex items-center gap-2 text-[13px] text-muted">
             <span>Mezo MUSD trove</span>
             <SourceTag kind="onchain" />
-            {mine && <span className="rounded border border-blue px-1.5 text-[12px] text-blue">your wallet</span>}
+            {mine && <span className="rounded-[var(--radius-badge)] bg-blue px-1.5 py-0.5 text-[12px] leading-none font-medium text-paper">Your wallet</span>}
           </div>
-          <Link href={`/positions/${p.owner}`} className="num mt-0.5 block text-[15px] text-ink hover:text-blue">
+          <Link href={`/positions/${p.owner}`} className="addr mt-1 block text-[15px] text-ink underline-offset-4 hover:text-blue hover:underline">
             {shortAddress(p.owner, 6)}
           </Link>
         </div>
         <div className="flex items-center gap-1">
           {r ? <RiskBadge category={r.category} /> : <span className="text-[13px] text-muted">{p.statusLabel}</span>}
           {onRemove && (
-            <button onClick={onRemove} className="rounded p-1 text-muted hover:text-ink" aria-label={`Stop watching ${p.owner}`}>
+            <button type="button" onClick={onRemove} className="rounded p-1 text-muted hover:text-ink" aria-label={`Stop watching ${p.owner}`}>
               <X className="size-4" />
             </button>
           )}
@@ -45,11 +45,11 @@ export function PositionCard({ p, thresholds, mine, onRemove }: { p: PositionDTO
           <div className="flex items-end justify-between gap-4">
             <div>
               <div className="text-[13px] text-muted">Health factor</div>
-              <div className="num text-[34px] leading-none" style={{ color: CATEGORY_COLOR[r.category] }}>{formatHF(r.hf)}</div>
+              <div className="num text-[40px] font-medium leading-none" style={{ color: CATEGORY_COLOR[r.category] }}>{formatHF(r.hf)}</div>
             </div>
             <div className="text-right">
               <div className="text-[13px] text-muted">Collateral ratio</div>
-              <div className="num text-lg">{formatRatioPct(r.icr)}</div>
+              <div className="num text-[20px] font-medium">{formatRatioPct(r.icr)}</div>
             </div>
           </div>
           <ClearanceGauge icr={r.icr} mcr={params.mcr} ccr={params.ccr} thresholds={thresholds} />
@@ -62,22 +62,15 @@ export function PositionCard({ p, thresholds, mine, onRemove }: { p: PositionDTO
             <div><dt className="text-muted">Updated</dt><dd className="num">block {Number(p.system.blockNumber).toLocaleString("en-US")}</dd></div>
           </dl>
           {rec && (
-            <div className={cn("rounded-md border px-3 py-2.5 text-[14px]", rec.tone === "urgent" ? "border-ink bg-surface" : rec.tone === "act" ? "border-ink bg-surface" : rec.tone === "watch" ? "border-ink bg-surface" : "border-line bg-surface")}>
-              <div className="font-medium text-ink">{rec.title}</div>
-              <div className="text-ink-soft">{rec.body}</div>
-            </div>
+            <Recommendation rec={rec} />
           )}
           <div className="flex flex-wrap gap-2">
-            <Link href={`/rescue/${p.owner}`}>
-              <Button size="sm" variant={r.category === "healthy" ? "secondary" : "primary"}>Rescue simulator <ArrowRight className="size-3.5" /></Button>
-            </Link>
-            <Link href={`/positions/${p.owner}`}>
-              <Button size="sm" variant="ghost">Details</Button>
-            </Link>
+            <ButtonLink href={`/rescue/${p.owner}`} size="sm" variant={r.category === "healthy" ? "secondary" : "primary"}>Rescue simulator</ButtonLink>
+            <ButtonLink href={`/positions/${p.owner}`} size="sm" variant="ghost">Details</ButtonLink>
           </div>
         </>
       ) : (
-        <p className="text-[14px] text-ink-soft">{p.active ? "Oracle price unavailable — risk cannot be computed right now." : `No active trove (${p.statusLabel.toLowerCase()}).`}</p>
+        <p className="text-[14px] text-ink-soft">{p.active ? "The oracle price is unavailable, so risk cannot be computed right now." : `No active trove (${p.statusLabel.toLowerCase()}).`}</p>
       )}
     </article>
   );

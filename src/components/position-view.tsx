@@ -1,7 +1,6 @@
 "use client";
 import { useState } from "react";
-import Link from "next/link";
-import { Eye, EyeOff, Printer, Share2, LifeBuoy, ArrowRight } from "lucide-react";
+import { Eye, EyeOff, Printer, Share2, LifeBuoy } from "lucide-react";
 import { toast } from "sonner";
 import { useEvents, useHistory, usePosition, useRadar, useReference } from "@/lib/client/api";
 import { paramsFromDTO } from "@/lib/convert";
@@ -9,7 +8,7 @@ import { recommend } from "@/lib/risk";
 import { formatAmount, formatBps, formatBtc, formatHF, formatRatioPct, formatUsd, shortAddress } from "@/lib/risk/format";
 import { assessFreshness } from "@/lib/risk/freshness";
 import { parsePositionId } from "@/lib/positions/id";
-import { Button, CATEGORY_COLOR, EmptyState, ErrorState, ExplorerLink, FreshnessPill, RiskBadge, SectionHeading, Segmented, Skeleton, SourceTag, Stat, CopyButton, cn } from "./ui";
+import { Button, CATEGORY_COLOR, Recommendation, EmptyState, ErrorState, ExplorerLink, FreshnessPill, RiskBadge, SectionHeading, Segmented, Skeleton, SourceTag, Stat, CopyButton, cn, ButtonLink } from "./ui";
 import { ClearanceGauge } from "./clearance";
 import { HealthHistoryChart, PriceHistoryChart } from "./charts";
 import { derivedRisk } from "./position-card";
@@ -21,7 +20,7 @@ export function InvalidId({ raw }: { raw: string }) {
   const id = parsePositionId(raw);
   if (id.kind === "demo")
     return (
-      <EmptyState title="Demo positions live on the demo page" action={<Link href="/demo"><Button variant="secondary">Open the demo</Button></Link>}>
+      <EmptyState title="Demo positions live on the demo page" action={<ButtonLink href="/demo" variant="secondary">Open the demo</ButtonLink>}>
         <p>“{raw}” is a fictional demo position. Live pages only show troves read from Mezo testnet, so fictional data never mixes with real positions.</p>
       </EmptyState>
     );
@@ -68,7 +67,7 @@ export function PositionView({ owner, focus }: { owner: string; focus: "details"
       as="h1"
       title={
         <span className="flex flex-wrap items-center gap-3">
-          {focus === "rescue" ? "Rescue simulator" : "Trove"} <span className="num text-[22px] text-ink-soft">{shortAddress(p.owner, 6)}</span>
+          {focus === "rescue" ? "Rescue simulator" : "Trove"} <span className="addr text-[22px] font-normal text-ink-soft">{shortAddress(p.owner, 6)}</span>
           {r && <RiskBadge category={r.category} size="lg" />}
         </span>
       }
@@ -103,21 +102,15 @@ export function PositionView({ owner, focus }: { owner: string; focus: "details"
           >
             <Share2 className="size-4" /> Share
           </Button>
-          <Link href={`/positions/${p.owner}/report`}>
-            <Button size="sm" variant="ghost">
-              <Printer className="size-4" /> Report
-            </Button>
-          </Link>
+          <ButtonLink href={`/positions/${p.owner}/report`} size="sm" variant="ghost">
+            <Printer className="size-4" /> Report
+          </ButtonLink>
           {focus === "details" ? (
-            <Link href={`/rescue/${p.owner}`}>
-              <Button size="sm" variant="primary">
-                <LifeBuoy className="size-4" /> Rescue simulator
-              </Button>
-            </Link>
+            <ButtonLink href={`/rescue/${p.owner}`} size="sm" variant="primary">
+              <LifeBuoy className="size-4" /> Rescue simulator
+            </ButtonLink>
           ) : (
-            <Link href={`/positions/${p.owner}`}>
-              <Button size="sm" variant="secondary">Position details</Button>
-            </Link>
+            <ButtonLink href={`/positions/${p.owner}`} size="sm" variant="secondary">Position details</ButtonLink>
           )}
         </div>
       }
@@ -130,7 +123,7 @@ export function PositionView({ owner, focus }: { owner: string; focus: "details"
         {header}
         <EmptyState title={`No active trove (${p.statusLabel.toLowerCase()})`}>
           <p>
-            <span className="num">{p.owner}</span> has no open MUSD trove on Mezo testnet, so there is no liquidation risk to monitor. Wallet holds <span className="num">{formatAmount(BigInt(p.wallet.musd))}</span> MUSD and <span className="num">{formatBtc(BigInt(p.wallet.btc))}</span> BTC.
+            <span className="addr break-all">{p.owner}</span> has no open MUSD trove on Mezo testnet, so there is no liquidation risk to monitor. Wallet holds <span className="num">{formatAmount(BigInt(p.wallet.musd))}</span> MUSD and <span className="num">{formatBtc(BigInt(p.wallet.btc))}</span> BTC.
           </p>
         </EmptyState>
       </div>
@@ -143,10 +136,10 @@ export function PositionView({ owner, focus }: { owner: string; focus: "details"
       {r && (
         <section className="panel grid grid-cols-1 gap-6 p-5 sm:p-6 lg:grid-cols-[1.2fr_1fr]" aria-label="Current risk">
           <div className="flex flex-col gap-5">
-            <div className="flex flex-wrap items-end gap-8">
+            <div className="flex flex-wrap items-end gap-x-8 gap-y-4">
               <div>
                 <div className="text-[13px] text-muted">Health factor (ICR ÷ 110%)</div>
-                <div className="num text-[52px] leading-none" style={{ color: CATEGORY_COLOR[r.category] }}>{formatHF(r.hf)}</div>
+                <div className="num text-[56px] font-medium leading-none" style={{ color: CATEGORY_COLOR[r.category] }}>{formatHF(r.hf)}</div>
               </div>
               <Stat label="Collateral ratio (ICR)" value={formatRatioPct(r.icr, 2)} sub="getCurrentICR" />
               <Stat label="Liquidation price" value={formatUsd(r.liquidationPrice, 0)} sub={`oracle now ${formatUsd(BigInt(p.system.price!), 0)}`} />
@@ -154,10 +147,7 @@ export function PositionView({ owner, focus }: { owner: string; focus: "details"
             </div>
             <ClearanceGauge icr={r.icr} mcr={params.mcr} ccr={params.ccr} thresholds={session.thresholds} />
             {rec && (
-              <div className={cn("rounded-md border px-4 py-3", rec.tone === "urgent" ? "border-ink bg-surface" : rec.tone === "act" ? "border-ink bg-surface" : rec.tone === "watch" ? "border-ink bg-surface" : "border-line bg-surface")}>
-                <div className="font-medium">{rec.title}</div>
-                <p className="text-[14px] text-ink-soft">{rec.body}</p>
-              </div>
+              <Recommendation rec={rec} />
             )}
           </div>
           <div className="grid grid-cols-2 gap-4 text-[14px]">
@@ -199,28 +189,28 @@ export function PositionView({ owner, focus }: { owner: string; focus: "details"
       <section className="grid grid-cols-1 gap-5 lg:grid-cols-2">
         <div className="panel p-5">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <h2 className="text-lg font-semibold">BTC oracle price</h2>
+            <h2 className="text-[16px] font-semibold">BTC oracle price</h2>
             <div className="flex items-center gap-2">
               <label className="flex items-center gap-1.5 text-[13px] text-muted">
-                <input type="checkbox" checked={showRef} onChange={(e) => setShowRef(e.target.checked)} className="accent-[var(--color-blue)]" /> External reference
+                <input type="checkbox" checked={showRef} onChange={(e) => setShowRef(e.target.checked)} className="size-4 accent-[var(--color-blue)]" /> External reference
               </label>
               <Segmented label="Range" value={range} onChange={setRange} options={[{ value: "24h", label: "24h" }, { value: "7d", label: "7d" }, { value: "30d", label: "30d" }]} />
             </div>
           </div>
           <div className="mt-4">
             {hist.isLoading ? <Skeleton className="h-[220px]" /> : hist.error ? <ErrorState title="History unavailable" error={hist.error} /> : hist.data ? <PriceHistoryChart data={hist.data} range={range} reference={showRef ? ref.data?.prices ?? null : null} /> : null}
-            {showRef && ref.error && <p className="mt-2 text-[13px] text-ink">External reference unavailable right now.</p>}
+            {showRef && ref.error && <p className="mt-2 text-[13px] font-medium text-ink">External reference unavailable right now.</p>}
           </div>
         </div>
         <div className="panel p-5">
-          <h2 className="text-lg font-semibold">Health factor history</h2>
+          <h2 className="text-[16px] font-semibold">Health factor history</h2>
           <div className="mt-4">{hist.isLoading ? <Skeleton className="h-[200px]" /> : hist.data ? <HealthHistoryChart data={hist.data} range={range} mcr={params.mcr} /> : null}</div>
         </div>
       </section>
 
       {focus === "details" && p.system.price && (
         <section>
-          <SectionHeading title="Scenario and rescue simulator" desc="Explore price moves and rescue amounts. Execution happens on the rescue page, after a confirmation screen." right={<Link href={`/rescue/${p.owner}`}><Button size="sm" variant="secondary">Open rescue page <ArrowRight className="size-3.5" /></Button></Link>} />
+          <SectionHeading title="Scenario and rescue simulator" desc="Explore price moves and rescue amounts. Execution happens on the rescue page, after a confirmation screen." right={<ButtonLink href={`/rescue/${p.owner}`} size="sm" variant="secondary">Open rescue page</ButtonLink>} />
           <div className="mt-4">
             <LiveRescuePanel position={p} dataUpdatedAt={q.dataUpdatedAt} />
           </div>
@@ -230,11 +220,11 @@ export function PositionView({ owner, focus }: { owner: string; focus: "details"
       <section className="grid grid-cols-1 gap-5 lg:grid-cols-[1.2fr_1fr]">
         <div className="panel p-5">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold">Recent on-chain activity</h2>
+            <h2 className="text-[16px] font-semibold">Recent on-chain activity</h2>
             <SourceTag kind="onchain" />
           </div>
           {events.isLoading && <Skeleton className="mt-4 h-24" />}
-          {events.error && <p className="mt-3 text-[14px] text-ink">Explorer log API unavailable: {(events.error as Error).message}</p>}
+          {events.error && <p className="mt-3 text-[14px] font-medium text-ink">Explorer log API unavailable: {(events.error as Error).message}</p>}
           {events.data && events.data.events.length === 0 && <p className="mt-3 text-[14px] text-muted">No trove events found.</p>}
           <ol className="mt-3 divide-y divide-line">
             {events.data?.events.slice(0, 12).map((e) => (
@@ -248,10 +238,10 @@ export function PositionView({ owner, focus }: { owner: string; focus: "details"
               </li>
             ))}
           </ol>
-          <p className="mt-2 text-[12px] text-muted">{events.data?.source}</p>
+          <p className="mt-2 text-[13px] text-muted">{events.data?.source}</p>
         </div>
         <div className="panel p-5">
-          <h2 className="text-lg font-semibold">Alerts for this trove</h2>
+          <h2 className="text-[16px] font-semibold">Alerts for this trove</h2>
           <p className="mt-1 text-[13px] text-muted">Checked once a day by a scheduled job, on every visit, and when you press Check now. Not continuous.</p>
           <div className="mt-4">
             <AlertRules owner={p.owner} compact />
@@ -260,7 +250,7 @@ export function PositionView({ owner, focus }: { owner: string; focus: "details"
       </section>
 
       <p className="text-[13px] text-muted">
-        Data source: TroveManager.getEntireDebtAndColl, Troves and PriceFeed.fetchPrice via Multicall3 on Mezo Testnet, block {Number(p.system.blockNumber).toLocaleString("en-US")} (chain time {new Date(p.system.blockTime * 1000).toLocaleString()}). Owner <span className="num">{p.owner}</span> <CopyButton value={p.owner} />
+        Data source: TroveManager.getEntireDebtAndColl, Troves and PriceFeed.fetchPrice via Multicall3 on Mezo Testnet, block {Number(p.system.blockNumber).toLocaleString("en-US")} (chain time {new Date(p.system.blockTime * 1000).toLocaleString()}). Owner <span className="addr break-all">{p.owner}</span> <CopyButton value={p.owner} />
       </p>
     </div>
   );

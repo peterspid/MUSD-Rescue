@@ -19,7 +19,7 @@ import {
 } from "@/lib/risk";
 import { formatAmount, formatBps, formatBtc, formatHF, formatRatioPct, formatUsd, parseAmount, toInputString } from "@/lib/risk/format";
 import type { ActionGate } from "@/lib/risk/freshness";
-import { Button, CATEGORY_COLOR, Field, RiskBadge, Segmented, SourceTag, Stat, cn, inputCls } from "./ui";
+import { Button, CATEGORY_COLOR, Callout, Field, RiskBadge, Segmented, SourceTag, Stat, cn, inputCls } from "./ui";
 import { ClearanceGauge } from "./clearance";
 
 export interface SimulatorProps {
@@ -108,11 +108,11 @@ export function Simulator(props: SimulatorProps) {
   const scenarioDiffers = changeBps !== 0;
 
   return (
-    <div className={cn("grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]", fictional && "")}>
+    <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]">
       {/* ---------------- Scenario ---------------- */}
-      <section className={cn("panel p-5 sm:p-6", fictional && "fictional")} aria-labelledby="scenario-h">
+      <section className={cn("panel min-w-0 p-5 sm:p-6", fictional && "example")} aria-labelledby="scenario-h">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2 id="scenario-h" className="text-xl font-semibold">
+          <h2 id="scenario-h" className="text-[20px] font-semibold">
             Price scenario
           </h2>
           <SourceTag kind={fictional ? "fictional" : "simulated"} />
@@ -124,30 +124,31 @@ export function Simulator(props: SimulatorProps) {
               key={b}
               onClick={() => setChangeBps(b)}
               aria-pressed={changeBps === b}
-              className={cn("num rounded-md border px-3 py-1.5 text-[13px]", changeBps === b ? "border-blue bg-blue-tint text-ink" : "border-line text-ink-soft hover:text-ink")}
+              type="button"
+              className={cn("num rounded-[var(--radius-control)] border px-3 py-1.5 text-[13px] transition-colors", changeBps === b ? "border-ink bg-ink text-paper" : "border-line-strong text-ink hover:border-ink")}
             >
               {b === 0 ? "No change" : `${b / 100}%`}
             </button>
           ))}
         </div>
         <div className="mt-4">
-          <label htmlFor="price-scrub" className="flex items-baseline justify-between text-[13px] text-muted">
-            <span>Drag BTC price</span>
+          <label htmlFor="price-scrub" className="flex items-baseline justify-between text-[14px]">
+            <span className="font-medium text-ink">Move the BTC price</span>
             <span className="num text-ink">
-              {formatUsd(price, 0)} <span className={changeBps < 0 ? "text-ink" : changeBps > 0 ? "text-blue" : "text-muted"}>({formatBps(changeBps, 1, true)})</span>
+              {formatUsd(price, 0)} <span className="text-muted">({formatBps(changeBps, 1, true)})</span>
             </span>
           </label>
           <input id="price-scrub" type="range" className="scrub mt-1" min={-7000} max={5000} step={50} value={changeBps} onChange={(e) => setChangeBps(Number(e.target.value))} aria-valuetext={`${changeBps / 100}% change, ${formatUsd(price, 0)}`} />
-          <div className="num flex justify-between text-[12px] text-muted">
+          <div className="num flex justify-between text-[13px] text-muted">
             <span>−70%</span>
             <span>0</span>
             <span>+50%</span>
           </div>
         </div>
 
-        <div className="mt-5 flex items-center gap-3">
+        <div className="mt-5 flex flex-wrap items-center gap-3">
           <RiskBadge category={scen.category} size="lg" />
-          {scen.category === "liquidatable" && <span className="text-[13px] text-ink">At this price anyone could liquidate the trove.</span>}
+          {scen.category === "liquidatable" && <span className="text-[14px] font-semibold text-ink">At this price anyone could liquidate the trove.</span>}
         </div>
         <ClearanceGauge className="mt-4" icr={scen.icr} simulatedIcr={hasInput && sim.after ? sim.after.icr : undefined} mcr={params.mcr} ccr={params.ccr} thresholds={thresholds} />
         <dl className="mt-6 grid grid-cols-2 gap-x-4 gap-y-4 sm:grid-cols-3">
@@ -159,23 +160,23 @@ export function Simulator(props: SimulatorProps) {
           <Stat label="Debt" value={formatAmount(p.debt)} sub={`+${formatAmount(perDay, 3)} MUSD/day interest`} />
         </dl>
         {sysAt.recoveryMode && (
-          <p className="mt-4 rounded-md border border-ink bg-surface px-3 py-2 text-[13px] text-ink">
-            At this price the {fictional ? "fictional " : ""}system TCR ({formatRatioPct(sysAt.tcr)}) is below 150%: Recovery Mode. MUSD still liquidates only below 110% ICR, but borrowing needs ICR ≥ 150%, the borrowing fee is waived, and closing troves is blocked.
-          </p>
+          <Callout tone="watch" className="mt-4" title="Recovery Mode at this price">
+            The {fictional ? "example " : ""}system collateral ratio ({formatRatioPct(sysAt.tcr)}) would be below 150%. MUSD still liquidates only below 110%, but borrowing needs a ratio of at least 150%, the borrowing fee is waived and closing troves is blocked.
+          </Callout>
         )}
 
-        <details className="mt-5 rounded-md border border-line bg-surface px-3 py-2">
-          <summary className="cursor-pointer text-[14px] text-ink-soft">What if I borrowed more? (calculator only)</summary>
+        <details className="mt-5 rounded-[var(--radius-control)] border border-line px-3 py-2">
+          <summary className="cursor-pointer text-[14px] text-ink">What if I borrowed more? (calculator only)</summary>
           <div className="mt-3">
             <Field label="Extra MUSD borrowed" hint="MUSD Rescue never prepares borrowing transactions. This shows how new debt (plus the 0.1% fee) would move your risk." htmlFor="borrow">
               <input id="borrow" inputMode="decimal" className={inputCls} value={borrowStr} onChange={(e) => setBorrowStr(e.target.value)} placeholder="0.00" />
             </Field>
-            {borrow && !borrow.ok && <p className="mt-1 text-[13px] text-ink">{borrow.error}</p>}
+            {borrow && !borrow.ok && <p className="mt-1 text-[13px] font-medium text-ink">{borrow.error}</p>}
             {borrowSim?.after && (
               <p className="mt-2 text-[14px] text-ink-soft">
                 Health factor would fall to <span className="num simulated text-ink">{formatHF(borrowSim.after.hf)}</span> ({formatRatioPct(borrowSim.after.icr)}), fee {formatAmount(borrowSim.borrowingFee)} MUSD.
                 {borrowSim.checks.filter((c) => c.level === "block").map((c) => (
-                  <span key={c.id} className="mt-1 block text-ink">{c.message}</span>
+                  <span key={c.id} className="mt-1 block font-medium text-ink">{c.message}</span>
                 ))}
               </p>
             )}
@@ -184,9 +185,9 @@ export function Simulator(props: SimulatorProps) {
       </section>
 
       {/* ---------------- Rescue simulator ---------------- */}
-      <section className={cn("panel p-5 sm:p-6", fictional && "fictional")} aria-labelledby="rescue-h">
+      <section className={cn("panel min-w-0 p-5 sm:p-6", fictional && "example")} aria-labelledby="rescue-h">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2 id="rescue-h" className="text-xl font-semibold">
+          <h2 id="rescue-h" className="text-[20px] font-semibold">
             Rescue simulator
           </h2>
           <Segmented<Tab>
@@ -212,10 +213,10 @@ export function Simulator(props: SimulatorProps) {
               error={repay && !repay.ok ? repay.error : null}
               hint={
                 <>
-                  Max without closing: <button className="num text-blue hover:underline" onClick={() => setRepayStr(toInputString(sim.maxRepay))}>{formatAmount(sim.maxRepay)}</button>
+                  Max without closing: <button type="button" className="num text-blue underline-offset-4 hover:underline" onClick={() => setRepayStr(toInputString(sim.maxRepay))}>{formatAmount(sim.maxRepay)}</button>
                   {wallet?.musd !== undefined && (
                     <>
-                      {" "}| Wallet: <button className="num text-blue hover:underline" onClick={() => setRepayStr(toInputString(wallet.musd! < sim.maxRepay ? wallet.musd! : sim.maxRepay))}>{formatAmount(wallet.musd)}</button>
+                      {" "}| Wallet: <button type="button" className="num text-blue underline-offset-4 hover:underline" onClick={() => setRepayStr(toInputString(wallet.musd! < sim.maxRepay ? wallet.musd! : sim.maxRepay))}>{formatAmount(wallet.musd)}</button>
                     </>
                   )}
                 </>
@@ -237,16 +238,16 @@ export function Simulator(props: SimulatorProps) {
         </div>
 
         {/* Before → after */}
-        <div className="mt-5 grid grid-cols-[1fr_auto_1fr] items-center gap-3 rounded-[var(--radius-control)] border border-line bg-surface p-4">
+        <div className="mt-5 grid grid-cols-[1fr_auto_1fr] items-center gap-3 rounded-[var(--radius-control)] bg-surface p-4">
           <div>
-            <div className="text-[12px] text-muted">{scenarioDiffers ? "At scenario price" : "Current"}</div>
-            <div className="num text-2xl" style={{ color: CATEGORY_COLOR[scen.category] }}>{formatHF(scen.hf)}</div>
+            <div className="text-[13px] text-muted">{scenarioDiffers ? "At scenario price" : "Current"}</div>
+            <div className="num text-[25px] font-medium" style={{ color: CATEGORY_COLOR[scen.category] }}>{formatHF(scen.hf)}</div>
             <div className="num text-[13px] text-muted">ICR {formatRatioPct(scen.icr)}</div>
           </div>
           <ArrowRight className="size-5 text-muted" aria-hidden />
           <div>
-            <div className="text-[12px] text-muted">After rescue</div>
-            <div className="num simulated text-2xl" style={{ color: hasInput && sim.after ? CATEGORY_COLOR[sim.after.category] : undefined }}>
+            <div className="text-[13px] text-muted">After rescue</div>
+            <div className="num simulated text-[25px] font-medium" style={{ color: hasInput && sim.after ? CATEGORY_COLOR[sim.after.category] : undefined }}>
               {hasInput && sim.after ? formatHF(sim.after.hf) : "—"}
             </div>
             <div className="num text-[13px] text-muted">ICR {hasInput && sim.after ? formatRatioPct(sim.after.icr) : "—"}</div>
@@ -264,13 +265,13 @@ export function Simulator(props: SimulatorProps) {
         {(blocks.length > 0 || warns.length > 0) && hasInput && (
           <ul className="mt-4 flex flex-col gap-1.5">
             {blocks.map((c) => (
-              <li key={c.id} className="flex gap-2 rounded-md border border-ink bg-surface px-3 py-2 text-[13px] text-ink">
+              <li key={c.id} className="flex gap-2 rounded-[var(--radius-control)] border-2 border-ink px-3 py-2 text-[14px] font-medium text-ink">
                 <OctagonAlert className="mt-0.5 size-4 shrink-0 text-ink" aria-hidden />
                 <span><span className="sr-only">Blocked: </span>{c.message}</span>
               </li>
             ))}
             {warns.map((c) => (
-              <li key={c.id} className="flex gap-2 rounded-md border border-ink bg-surface px-3 py-2 text-[13px] text-ink-soft">
+              <li key={c.id} className="flex gap-2 rounded-[var(--radius-control)] border border-ink px-3 py-2 text-[14px] text-ink-soft">
                 <TriangleAlert className="mt-0.5 size-4 shrink-0 text-ink" aria-hidden />
                 <span>{c.message}</span>
               </li>
@@ -293,7 +294,7 @@ export function Simulator(props: SimulatorProps) {
               <table className="w-full min-w-[520px] text-left text-[14px]">
                 <caption className="sr-only">Ways to reach the target health factor</caption>
                 <thead>
-                  <tr className="text-[12px] text-muted">
+                  <tr className="text-[13px] text-muted">
                     <th className="pb-2 font-normal">Option</th>
                     <th className="pb-2 font-normal">Amount</th>
                     <th className="pb-2 font-normal">Cost (USD)</th>
@@ -315,8 +316,8 @@ export function Simulator(props: SimulatorProps) {
                       </td>
                       <td className="num py-2.5 pr-3">{formatUsd(o.usdCommitted)}</td>
                       <td className="num py-2.5 pr-3">
-                        <span className={cn(!o.feasible && "text-ink")}>{formatHF(o.hfAfter)}</span>
-                        {!o.feasible && <div className="max-w-[24ch] text-[12px] text-ink">{o.note}</div>}
+                        <span className={cn(!o.feasible && "font-semibold text-ink")}>{formatHF(o.hfAfter)}</span>
+                        {!o.feasible && <div className="max-w-[24ch] text-[13px] text-ink">{o.note}</div>}
                       </td>
                       <td className="py-2.5">
                         <Button
@@ -346,9 +347,9 @@ export function Simulator(props: SimulatorProps) {
         {/* Execution */}
         <div className="mt-6 border-t border-line pt-5">
           {fictional ? (
-            <div className="flex items-start gap-2 rounded-md border border-ink bg-paper px-3 py-2.5 text-[14px] text-ink-soft">
-              <Lock className="mt-0.5 size-4 shrink-0 text-ink-soft" />
-              Fictional position: simulations here are never sent on-chain. Connect a wallet with a real MUSD trove to rescue it.
+            <div className="flex items-start gap-2 rounded-[var(--radius-control)] border border-dotted border-ink px-3 py-2.5 text-[14px] text-ink-soft">
+              <Lock className="mt-0.5 size-4 shrink-0 text-ink" aria-hidden />
+              Example position: simulations here are never sent on-chain. Connect a wallet with a real MUSD trove to rescue it.
             </div>
           ) : (
             <div className="flex flex-wrap items-center gap-3">

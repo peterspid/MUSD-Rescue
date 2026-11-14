@@ -23,19 +23,19 @@ export function ConnectModal({ open, onOpenChange }: { open: boolean; onOpenChan
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-50 bg-paper " />
+        <Dialog.Overlay className="fixed inset-0 z-50 bg-ink/40" />
         <Dialog.Content className="panel fixed left-1/2 top-1/2 z-50 w-[min(440px,calc(100vw-32px))] -translate-x-1/2 -translate-y-1/2 p-6">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <Dialog.Title className="text-xl font-semibold">Connect a wallet</Dialog.Title>
-              <Dialog.Description className="mt-1 text-sm text-ink-soft">MUSD Rescue reads your trove and asks your wallet to sign only when you confirm a rescue. It never asks for keys or seed phrases.</Dialog.Description>
+              <Dialog.Title className="text-[20px] font-semibold">Connect a wallet</Dialog.Title>
+              <Dialog.Description className="mt-1 text-[14px] text-ink-soft">MUSD Rescue reads your trove and asks your wallet to sign only when you confirm a rescue. It never asks for keys or seed phrases.</Dialog.Description>
             </div>
             <Dialog.Close className="rounded p-1 text-muted hover:text-ink" aria-label="Close">
               <X className="size-5" />
             </Dialog.Close>
           </div>
           <ul className="mt-5 flex flex-col gap-2">
-            {list.length === 0 && <li className="text-sm text-ink-soft">No browser wallet detected. Install MetaMask, Rabby or another EVM wallet, then reload.</li>}
+            {list.length === 0 && <li className="text-[14px] text-ink-soft">No browser wallet detected. Install MetaMask, Rabby or another EVM wallet, then reload.</li>}
             {list.map((c) => (
               <li key={c.uid}>
                 <button
@@ -61,23 +61,23 @@ export function ConnectModal({ open, onOpenChange }: { open: boolean; onOpenChan
                       setBusy(null);
                     }
                   }}
-                  className="flex w-full items-center gap-3 rounded-[var(--radius-control)] border border-line bg-surface px-4 py-3 text-left hover:border-blue hover:bg-surface disabled:opacity-60"
+                  className="flex w-full items-center gap-3 rounded-[var(--radius-control)] border border-line-strong bg-paper px-4 py-3 text-left transition-colors hover:border-ink disabled:opacity-60"
                 >
                   {c.icon ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={c.icon} alt="" className="size-7 rounded-md" />
                   ) : (
-                    <Wallet className="size-7 rounded-md bg-surface p-1 text-blue" aria-hidden />
+                    <Wallet className="size-7 rounded-md bg-surface p-1 text-ink" aria-hidden />
                   )}
                   <span className="flex-1 font-medium">{c.name === "Injected" ? "Browser wallet" : c.name}</span>
-                  {busy === c.uid && <span className="text-xs text-muted">Check your wallet…</span>}
+                  {busy === c.uid && <span className="text-[13px] text-muted">Check your wallet…</span>}
                 </button>
               </li>
             ))}
           </ul>
           <p className="mt-4 text-[13px] text-muted">
             Need testnet BTC for gas? Use the{" "}
-            <a className="text-blue hover:underline" href="https://faucet.test.mezo.org/" target="_blank" rel="noreferrer">
+            <a className="text-blue underline-offset-4 hover:underline" href="https://faucet.test.mezo.org/" target="_blank" rel="noreferrer">
               Mezo faucet
             </a>
             .
@@ -108,7 +108,7 @@ export function ConnectButton({ size = "md", label = "Connect wallet" }: { size?
     <div className="relative">
       <Button size={size} variant="secondary" onClick={() => setMenu((m) => !m)} aria-expanded={menu} aria-haspopup="menu">
         <span className="size-2 rounded-full bg-blue" aria-hidden />
-        <span className="num">{shortAddress(address)}</span>
+        <span className="addr">{shortAddress(address)}</span>
       </Button>
       {menu && <AccountMenu onClose={() => setMenu(false)} />}
     </div>
@@ -130,22 +130,22 @@ function AccountMenu({ onClose }: { onClose: () => void }) {
   return (
     <>
       <div className="fixed inset-0 z-40" onClick={onClose} aria-hidden />
-      <div role="menu" className="panel absolute right-0 z-50 mt-2 w-[300px] p-4">
+      <div role="menu" className="panel absolute right-0 z-50 mt-2 w-[min(300px,calc(100vw-24px))] border-ink p-4">
         <div className="flex items-center justify-between">
-          <span className="num text-sm">{shortAddress(address, 6)}</span>
+          <span className="addr text-[14px]">{shortAddress(address, 6)}</span>
           <CopyButton value={address ?? ""} label="Copy address" />
         </div>
-        <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
+        <div className="mt-3 grid grid-cols-2 gap-3 text-[14px]">
           <div>
-            <div className="text-[12px] text-muted">BTC (gas + collateral)</div>
+            <div className="text-[13px] text-muted">BTC (gas and collateral)</div>
             <div className="num">{btc.data ? formatBtc(btc.data.value) : "—"}</div>
           </div>
           <div>
-            <div className="text-[12px] text-muted">MUSD</div>
+            <div className="text-[13px] text-muted">MUSD</div>
             <div className="num">{musd.data !== undefined ? formatAmount(musd.data as bigint) : "—"}</div>
           </div>
         </div>
-        <div className={cn("mt-3 rounded-md border px-2.5 py-1.5 text-[13px]", support.kind === "supported" ? "border-blue text-blue" : "border-ink text-ink")}>{support.label}</div>
+        <div className={cn("mt-3 rounded-[var(--radius-control)] border px-2.5 py-1.5 text-[13px]", support.kind === "supported" ? "border-blue text-blue" : "border-2 border-ink font-medium text-ink")}>{support.label}</div>
         <div className="mt-3 flex flex-col gap-1.5">
           {session.address ? (
             <div className="text-[13px] text-muted">
@@ -229,7 +229,7 @@ export function NetworkNotice() {
   useEffect(() => setMounted(true), []);
   if (!mounted || !isConnected || support.kind === "supported") return null;
   return (
-    <div role="alert" className="flex flex-wrap items-center gap-3 border-b border-ink bg-surface px-4 py-2.5 text-sm text-ink">
+    <div role="alert" className="flex flex-wrap items-center gap-3 border-b border-ink bg-ink px-4 py-2.5 text-[14px] text-paper">
       <TriangleAlert className="size-4 shrink-0" aria-hidden />
       <span className="flex-1">
         {support.label}. MUSD Rescue reads positions from Mezo Testnet and only prepares rescue transactions there. Switch networks in your wallet to act.

@@ -273,6 +273,16 @@ export function Callout({ tone = "neutral", title, children, icon, className, ro
   );
 }
 
+/** The risk engine's recommendation (`recommend()` in lib/risk) as a callout. */
+export function Recommendation({ rec, className }: { rec: { tone: "ok" | "watch" | "act" | "urgent" | "neutral"; title: string; body: string }; className?: string }) {
+  const tone: CalloutTone = rec.tone === "ok" ? "info" : rec.tone;
+  return (
+    <Callout tone={tone} title={rec.title} className={className} icon={rec.tone === "ok" ? <ShieldCheck className="size-4" /> : undefined}>
+      {rec.body}
+    </Callout>
+  );
+}
+
 export function SectionHeading({ title, desc, right, as: As = "h2" }: { title: ReactNode; desc?: ReactNode; right?: ReactNode; as?: "h1" | "h2" | "h3" }) {
   return (
     <div className="flex flex-wrap items-end justify-between gap-3">
