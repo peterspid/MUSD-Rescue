@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Bell, Gauge, ShieldCheck } from "lucide-react";
+import { Bell, Calculator, Gauge, ShieldCheck } from "lucide-react";
 import { Hero } from "@/components/hero";
 import { Logo } from "@/components/logo";
 import { ConnectButton } from "@/components/wallet";
@@ -8,8 +8,9 @@ import { LiveNumbers, RadarTeaser } from "@/components/landing-live";
 import { SystemStrip } from "@/components/app-shell";
 
 const BENEFITS = [
+  { icon: ShieldCheck, t: "Rescue it while you are offline", d: "Store a repayment or BTC top-up on-chain with one transaction. RescueGuard runs it the moment your collateral ratio falls below your trigger, and anyone can be the keeper." },
   { icon: Gauge, t: "Watch collateral health", d: "Collateral ratio, health factor and liquidation price for your trove, read from TroveManager every 15 seconds with interest accrued to the second." },
-  { icon: ShieldCheck, t: "Plan a rescue that will go through", d: "Repay MUSD, add BTC or both. Each plan is checked against the contract's own rules, including the 1,800 MUSD minimum net debt, before you sign anything." },
+  { icon: Calculator, t: "Plan a rescue that will go through", d: "Repay MUSD, add BTC or both. Each plan is checked against the contract's own rules, including the 1,800 MUSD minimum net debt, before you sign anything." },
   { icon: Bell, t: "Hear about it early", d: "Alert rules for warning zones, price drops and unexpected debt, checked daily by a scheduler, on every visit and whenever you press Check now." },
 ];
 
@@ -30,6 +31,7 @@ export default function Landing() {
           </Link>
           <nav className="ml-6 hidden items-center gap-6 text-[14px] text-ink-soft md:flex" aria-label="Main">
             <Link href="/dashboard" className="hover:text-ink">Dashboard</Link>
+            <Link href="/guard" className="hover:text-ink">Rescue Guard</Link>
             <Link href="/radar" className="hover:text-ink">Liquidation radar</Link>
             <Link href="/demo" className="hover:text-ink">Demo</Link>
             <Link href="/methodology" className="hover:text-ink">Methodology</Link>
@@ -48,9 +50,9 @@ export default function Landing() {
           <h2 id="benefits" className="max-w-[24ch] text-[25px] font-semibold leading-tight tracking-[-0.015em] sm:text-[32px]">
             Built for the five minutes when BTC is falling
           </h2>
-          <div className="mt-10 grid gap-10 md:grid-cols-3 md:gap-0 md:divide-x md:divide-line">
+          <div className="mt-10 grid gap-10 sm:grid-cols-2 lg:grid-cols-4 lg:gap-0 lg:divide-x lg:divide-line">
             {BENEFITS.map((b, i) => (
-              <div key={b.t} className={i === 0 ? "md:pr-8" : i === 1 ? "md:px-8" : "md:pl-8"}>
+              <div key={b.t} className={i === 0 ? "lg:pr-7" : i === BENEFITS.length - 1 ? "lg:pl-7" : "lg:px-7"}>
                 <b.icon className="size-6 text-ink" aria-hidden />
                 <h3 className="mt-4 text-[20px] font-semibold leading-snug">{b.t}</h3>
                 <p className="mt-2 max-w-[42ch] text-[15px] leading-relaxed text-ink-soft">{b.d}</p>
