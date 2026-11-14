@@ -1,0 +1,48 @@
+{
+  "network": "mezo-testnet",
+  "chainId": 31611,
+  "contracts": {
+    "RescueGuard": {
+      "address": "0xf100dd7ae2d9dc651e9c9545790aa9c7b5a0e711",
+      "deployTx": "0xa9224eb8d6af78f5e8d39ec20ab6004ddfc12f445509166dc52b643c4eb56072",
+      "deployBlock": 16776263,
+      "gasUsed": "3415447",
+      "deployer": "0x679D52E30B45cEF4C6B6AFec792DC3252FcF5745",
+      "constructorArgs": {
+        "borrowerOperationsSignatures": "0xD757e3646AF370b15f32EB557F0F8380Df7D639e",
+        "troveManager": "0xE47c80e8c23f6B4A1aE41c34837a0599D5D16bb0",
+        "priceFeed": "0x86bCF0841622a5dAC14A313a15f96A95421b9366",
+        "musd": "0x118917a40FAF1CD7a13dB0Ef56C86De7973Ac503"
+      },
+      "compiler": "solc 0.8.24, optimizer 200 runs, evmVersion london, OpenZeppelin 5.0.2",
+      "sourceCommit": "8e71d7aa059da5d4dad7b8739978106b0c0c7798",
+      "explorer": "https://explorer.test.mezo.org/address/0xf100dd7ae2d9dc651e9c9545790aa9c7b5a0e711",
+      "verified": {
+        "explorer": "Blockscout (Mezo testnet)",
+        "url": "https://explorer.test.mezo.org/address/0xf100dd7ae2d9dc651e9c9545790aa9c7b5a0e711#code",
+        "method": "hardhat verify --network mezotestnet"
+      }
+    }
+  },
+  "deployedAt": "2026-11-14T13:34:38.742Z",
+  "superseded": [
+    {
+      "address": "0x79876802ace422cff25d89c991410294e46d7c10",
+      "deployTx": "0x4811ab1f296f7fa2f09f3d35dde2297526cd3fedf073966477cd9d521ecbffd6",
+      "deployBlock": 16776234,
+      "gasUsed": "3415447",
+      "deployer": "0x10ac9924a78051BdD770978740C5084205cdB628",
+      "constructorArgs": {
+        "borrowerOperationsSignatures": "0xD757e3646AF370b15f32EB557F0F8380Df7D639e",
+        "troveManager": "0xE47c80e8c23f6B4A1aE41c34837a0599D5D16bb0",
+        "priceFeed": "0x86bCF0841622a5dAC14A313a15f96A95421b9366",
+        "musd": "0x118917a40FAF1CD7a13dB0Ef56C86De7973Ac503"
+      },
+      "compiler": "solc 0.8.24, optimizer 200 runs, evmVersion london, OpenZeppelin 5.0.2",
+      "sourceCommit": "8e71d7aa059da5d4dad7b8739978106b0c0c7798",
+      "explorer": "https://explorer.test.mezo.org/address/0x79876802ace422cff25d89c991410294e46d7c10",
+      "supersededAt": "2026-11-14T13:34:38.740Z",
+      "reason": "Deployed from the previous key; redeployed from the new Wave 2 deployer key at the owner's request"
+    }
+  ]
+}

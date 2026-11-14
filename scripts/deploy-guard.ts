@@ -8,7 +8,7 @@
  * - writes deployments/mezo-testnet.json and regenerates src/config/guard.ts (address, deploy block, ABI)
  * Verify afterwards: cd contracts && npx hardhat verify --network mezotestnet <address> <args...>
  */
-import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { execSync } from "node:child_process";
 import { createPublicClient, createWalletClient, http, parseAbi, formatEther, type Abi, type Hex } from "viem";
 import { mezoTestnet } from "../src/config/chains";
@@ -43,6 +43,12 @@ async function main() {
 
   const commit = execSync("git rev-parse HEAD").toString().trim();
   mkdirSync("deployments", { recursive: true });
+  // Keep earlier deployments in the record, marked superseded (never silently overwritten).
+  const prev = existsSync("deployments/mezo-testnet.json") ? JSON.parse(readFileSync("deployments/mezo-testnet.json", "utf8")) : null;
+  const superseded = [
+    ...(prev?.superseded ?? []),
+    ...(prev?.contracts?.RescueGuard ? [{ ...prev.contracts.RescueGuard, supersededAt: new Date().toISOString(), reason: process.env.SUPERSEDE_REASON || "redeployed" }] : []),
+  ];
   const record = {
     network: "mezo-testnet",
     chainId: mezoTestnet.id,
@@ -60,6 +66,7 @@ async function main() {
       },
     },
     deployedAt: new Date().toISOString(),
+    superseded,
   };
   writeFileSync("deployments/mezo-testnet.json", JSON.stringify(record, null, 2) + "\n");
   writeGuardConfig(rc.contractAddress, Number(rc.blockNumber), bos, art.abi);
