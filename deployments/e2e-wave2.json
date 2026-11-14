@@ -1,0 +1,197 @@
+{
+  "runs": [
+    {
+      "ranAt": "2026-11-14 (first run, same script)",
+      "note": "17/18 passed. The one failed check was a test race: the Node RPC read lagged one block behind the wallet node right after the re-arm. The plan was executed successfully seconds later by the watcher, which is only possible with a valid current authorization. Fixed in the script (settled reads) and the second run passed 19/19.",
+      "transactions": [
+        {
+          "step": "deployer: open trove in the app (0.047 BTC, 1,900 MUSD)",
+          "hash": "0x38a7a3ca60059cb544f7a71d5b075fc00880656181cd6d71bdb18ef49115914f",
+          "explorer": "https://explorer.test.mezo.org/tx/0x38a7a3ca60059cb544f7a71d5b075fc00880656181cd6d71bdb18ef49115914f"
+        },
+        {
+          "step": "deployer: store 100 MUSD repay plan (authorization + permit, one tx)",
+          "hash": "0x2d43c381a44c76444bfa530ad0215eaa6935988fe14d11777d321f1fb4d8a4d3",
+          "explorer": "https://explorer.test.mezo.org/tx/0x2d43c381a44c76444bfa530ad0215eaa6935988fe14d11777d321f1fb4d8a4d3"
+        },
+        {
+          "step": "deployer: change plan to 90 MUSD at 160% (retire step + re-arm)",
+          "hash": "0xb322d1193f89006cb88f5fc78f5f4d7324a8f4fa7aafa2feee39d0e745fe05f6",
+          "explorer": "https://explorer.test.mezo.org/tx/0xb322d1193f89006cb88f5fc78f5f4d7324a8f4fa7aafa2feee39d0e745fe05f6"
+        },
+        {
+          "step": "watcher: runs the ready rescue, debt -90 MUSD, tip +0.9 MUSD",
+          "hash": "0xab574e6bf2b782928e0d8b18eec224fef8982ac07cd6d17af4d807439a3452c1",
+          "explorer": "https://explorer.test.mezo.org/tx/0xab574e6bf2b782928e0d8b18eec224fef8982ac07cd6d17af4d807439a3452c1"
+        },
+        {
+          "step": "watcher: swap 0.0005 BTC for MUSD through Mezo Pools",
+          "hash": "0x5b83926b5d7ae7c76611916ffb35de2725c435132f255a137ad683a9624d0aba",
+          "explorer": "https://explorer.test.mezo.org/tx/0x5b83926b5d7ae7c76611916ffb35de2725c435132f255a137ad683a9624d0aba"
+        },
+        {
+          "step": "deployer: repay 5 MUSD via the rescue simulator",
+          "hash": "0x9cf4f7be6dda78a77cf1b6457439e0ee5fa864bb8aa86bf60b7d9a91a845b9a0",
+          "explorer": "https://explorer.test.mezo.org/tx/0x9cf4f7be6dda78a77cf1b6457439e0ee5fa864bb8aa86bf60b7d9a91a845b9a0"
+        },
+        {
+          "step": "demo trove owner: store 0.003 BTC top-up plan at 118%",
+          "hash": "0x3a12bba70edcb3435556d64153685412e9daee62a8a9bcda886448b92d50f673",
+          "explorer": "https://explorer.test.mezo.org/tx/0x3a12bba70edcb3435556d64153685412e9daee62a8a9bcda886448b92d50f673"
+        }
+      ]
+    },
+    {
+      "ranAt": "2026-11-14T14:20:02.037Z",
+      "baseUrl": "http://localhost:3300",
+      "rescueGuard": "0xf100dd7ae2d9dc651e9c9545790aa9c7b5a0e711",
+      "wallets": {
+        "deployer": "0x679D52E30B45cEF4C6B6AFec792DC3252FcF5745",
+        "troveOwner": "0x10ac9924a78051BdD770978740C5084205cdB628",
+        "watcher": "0x7Ff3cF33ee66a5DB788ddA2469fA125A8C279665",
+        "outsider": "0xDe9F8E0a8CA1034dA410344a34Ce78A1999d56ac"
+      },
+      "passed": 19,
+      "total": 19,
+      "results": [
+        {
+          "step": "deployer: wallet connects through EIP-6963 discovery",
+          "ok": true,
+          "detail": "0x679D52E30B45cEF4C6B6AFec792DC3252FcF5745"
+        },
+        {
+          "step": "deployer: trove already open (skipping open)",
+          "ok": true
+        },
+        {
+          "step": "deployer: cancel and withdraw everything (exit)",
+          "ok": true,
+          "detail": "5.5752 MUSD back to the wallet"
+        },
+        {
+          "step": "deployer: store repay plan (authorization + permit, one tx)",
+          "ok": true,
+          "detail": "5.52 MUSD, status 1, ICR 155.7401685152482591%"
+        },
+        {
+          "step": "deployer: change plan (retires old authorization first)",
+          "ok": true,
+          "detail": "4.96 MUSD, status 2 (2 = ready)"
+        },
+        {
+          "step": "watcher: runs the deployer's ready rescue (permissionless)",
+          "ok": true,
+          "detail": "debt -4.959990460580231136 MUSD, tip +0.0496 MUSD"
+        },
+        {
+          "step": "watcher: swaps BTC for MUSD through Mezo Pools",
+          "ok": true,
+          "detail": "+39.088333464892512408 MUSD"
+        },
+        {
+          "step": "deployer: repay 0.97 MUSD via simulator (verified receipt + re-read)",
+          "ok": true,
+          "detail": "0xb9a9609583b047a82d0d4a1699b1c53c5570ca3ba9cae8a845fdfcfe09bb1b0c"
+        },
+        {
+          "step": "demo trove owner: plan already stored (Armed event found)",
+          "ok": true,
+          "detail": "status 1, tx 0x3a12bba70edcb3435556d64153685412e9daee62a8a9bcda886448b92d50f673"
+        },
+        {
+          "step": "outsider: no run button while the demo trove is above its trigger",
+          "ok": true,
+          "detail": "status 1"
+        },
+        {
+          "step": "outsider: execute() on a waiting plan reverts with TriggerNotReached",
+          "ok": true
+        },
+        {
+          "step": "registry lists the rescue run on-chain",
+          "ok": true,
+          "detail": "3 rescue(s)"
+        },
+        {
+          "step": "explorer confirms deployer: cancel and withdraw everything (exit)",
+          "ok": true,
+          "detail": "0x4de8a35acd8bdb8cc67cc33520714fc27e60d39cca64adf7268777ea96221d2d"
+        },
+        {
+          "step": "explorer confirms deployer: store repay plan (authorization + permit, one tx)",
+          "ok": true,
+          "detail": "0xf1abd359ce8c33e8db8029f65ef8fc8170fb33bf8f78ac57b87d250e8d60dd77"
+        },
+        {
+          "step": "explorer confirms deployer: change plan (retires old authorization first)",
+          "ok": true,
+          "detail": "0xa30b295e27873eb3ae50a435851842c25e347046ad107165fde9ec190a132fd3"
+        },
+        {
+          "step": "explorer confirms watcher: runs the deployer's ready rescue (permissionless)",
+          "ok": true,
+          "detail": "0xdfeeafa7af1ca13b560ff4f198a7b1cb1501f89576a831a65b8e5cd4ba9f4cc2"
+        },
+        {
+          "step": "explorer confirms watcher: swaps BTC for MUSD through Mezo Pools",
+          "ok": true,
+          "detail": "0xd4bc198ceb503d49f1b023a699a5e625cb728f951f2e39381de43b9467476b7d"
+        },
+        {
+          "step": "explorer confirms deployer: repay 0.97 MUSD via simulator",
+          "ok": true,
+          "detail": "0xb9a9609583b047a82d0d4a1699b1c53c5570ca3ba9cae8a845fdfcfe09bb1b0c"
+        },
+        {
+          "step": "explorer confirms demo trove owner: store BTC top-up plan",
+          "ok": true,
+          "detail": "0x3a12bba70edcb3435556d64153685412e9daee62a8a9bcda886448b92d50f673"
+        }
+      ],
+      "transactions": [
+        {
+          "step": "deployer: cancel and withdraw everything (exit)",
+          "wallet": "deployer",
+          "hash": "0x4de8a35acd8bdb8cc67cc33520714fc27e60d39cca64adf7268777ea96221d2d",
+          "explorer": "https://explorer.test.mezo.org/tx/0x4de8a35acd8bdb8cc67cc33520714fc27e60d39cca64adf7268777ea96221d2d"
+        },
+        {
+          "step": "deployer: store repay plan (authorization + permit, one tx)",
+          "wallet": "deployer",
+          "hash": "0xf1abd359ce8c33e8db8029f65ef8fc8170fb33bf8f78ac57b87d250e8d60dd77",
+          "explorer": "https://explorer.test.mezo.org/tx/0xf1abd359ce8c33e8db8029f65ef8fc8170fb33bf8f78ac57b87d250e8d60dd77"
+        },
+        {
+          "step": "deployer: change plan (retires old authorization first)",
+          "wallet": "deployer",
+          "hash": "0xa30b295e27873eb3ae50a435851842c25e347046ad107165fde9ec190a132fd3",
+          "explorer": "https://explorer.test.mezo.org/tx/0xa30b295e27873eb3ae50a435851842c25e347046ad107165fde9ec190a132fd3"
+        },
+        {
+          "step": "watcher: runs the deployer's ready rescue (permissionless)",
+          "wallet": "watcher",
+          "hash": "0xdfeeafa7af1ca13b560ff4f198a7b1cb1501f89576a831a65b8e5cd4ba9f4cc2",
+          "explorer": "https://explorer.test.mezo.org/tx/0xdfeeafa7af1ca13b560ff4f198a7b1cb1501f89576a831a65b8e5cd4ba9f4cc2"
+        },
+        {
+          "step": "watcher: swaps BTC for MUSD through Mezo Pools",
+          "wallet": "watcher",
+          "hash": "0xd4bc198ceb503d49f1b023a699a5e625cb728f951f2e39381de43b9467476b7d",
+          "explorer": "https://explorer.test.mezo.org/tx/0xd4bc198ceb503d49f1b023a699a5e625cb728f951f2e39381de43b9467476b7d"
+        },
+        {
+          "step": "deployer: repay 0.97 MUSD via simulator",
+          "wallet": "deployer",
+          "hash": "0xb9a9609583b047a82d0d4a1699b1c53c5570ca3ba9cae8a845fdfcfe09bb1b0c",
+          "explorer": "https://explorer.test.mezo.org/tx/0xb9a9609583b047a82d0d4a1699b1c53c5570ca3ba9cae8a845fdfcfe09bb1b0c"
+        },
+        {
+          "step": "demo trove owner: store BTC top-up plan",
+          "wallet": "trove-owner",
+          "hash": "0x3a12bba70edcb3435556d64153685412e9daee62a8a9bcda886448b92d50f673",
+          "explorer": "https://explorer.test.mezo.org/tx/0x3a12bba70edcb3435556d64153685412e9daee62a8a9bcda886448b92d50f673"
+        }
+      ]
+    }
+  ]
+}
