@@ -121,9 +121,9 @@ export function PositionView({ owner, focus }: { owner: string; focus: "details"
     return (
       <div className="flex flex-col gap-6">
         {header}
-        <EmptyState title={`No active trove (${p.statusLabel.toLowerCase()})`}>
+        <EmptyState title="No open MUSD trove at this address">
           <p>
-            <span className="addr break-all">{p.owner}</span> has no open MUSD trove on Mezo testnet, so there is no liquidation risk to monitor. Wallet holds <span className="num">{formatAmount(BigInt(p.wallet.musd))}</span> MUSD and <span className="num">{formatBtc(BigInt(p.wallet.btc))}</span> BTC.
+            <span className="addr break-all">{p.owner}</span> has no open MUSD trove on Mezo testnet (status: {p.statusLabel.toLowerCase()}), so there is no liquidation risk to monitor. Wallet holds <span className="num">{formatAmount(BigInt(p.wallet.musd))}</span> MUSD and <span className="num">{formatBtc(BigInt(p.wallet.btc))}</span> BTC.
           </p>
         </EmptyState>
       </div>

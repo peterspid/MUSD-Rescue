@@ -61,13 +61,15 @@ export default function Landing() {
 
         <section className="mx-auto grid max-w-[1240px] gap-6 px-4 pb-16 sm:px-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
           <LiveNumbers />
-          <div className="panel flex flex-col justify-between gap-6 p-6">
+          <div className="panel flex flex-col gap-6 p-6">
             <div>
               <h2 className="text-[25px] font-semibold leading-tight tracking-[-0.015em]">Check any trove, no wallet needed</h2>
               <p className="mt-2 max-w-[52ch] text-ink-soft">Paste the address that owns an MUSD trove to see its live risk, history and rescue options in read-only mode.</p>
             </div>
             <WatchInput />
-            <RadarTeaser />
+            <div className="mt-auto">
+              <RadarTeaser />
+            </div>
           </div>
         </section>
 

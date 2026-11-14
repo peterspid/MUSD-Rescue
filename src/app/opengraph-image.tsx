@@ -12,9 +12,11 @@ export default function OG() {
     (
       <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between", background: "#ffffff", color: "#000000", padding: "64px 120px", fontFamily: "sans-serif" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 16, fontSize: 30, fontWeight: 600 }}>
-          <div style={{ width: 44, height: 44, background: "#1e40ff", borderRadius: 8, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 6 }}>
-            <div style={{ width: 16, height: 16, borderRadius: 8, background: "#ffffff" }} />
-            <div style={{ width: 26, height: 4, background: "#ffffff" }} />
+          <div style={{ width: 44, height: 44, background: "#1e40ff", borderRadius: 8, display: "flex", position: "relative" }}>
+            <div style={{ position: "absolute", left: 8, top: 30, width: 28, height: 4, background: "#ffffff" }} />
+            <div style={{ position: "absolute", left: 12, top: 22, width: 3, height: 8, background: "#ffffff" }} />
+            <div style={{ position: "absolute", left: 26, top: 16, width: 4, height: 14, background: "#ffffff" }} />
+            <div style={{ position: "absolute", left: 22, top: 9, width: 12, height: 12, borderRadius: 6, background: "#ffffff" }} />
           </div>
           MUSD Rescue
         </div>

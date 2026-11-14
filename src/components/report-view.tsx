@@ -39,7 +39,7 @@ export function ReportView({ owner }: { owner: string }) {
             <p className="addr mt-1 break-all text-[13px] text-ink-soft">{p.owner}</p>
             <p className="text-[13px] text-muted">Mezo Testnet, block {Number(p.system.blockNumber).toLocaleString("en-US")}, {new Date(p.system.blockTime * 1000).toUTCString()}</p>
           </div>
-          <div className="text-right">
+          <div className="sm:text-right">
             <div className="num text-[48px] font-medium leading-none" style={{ color: CATEGORY_COLOR[now.category] }}>{formatHF(now.hf)}</div>
             <div className="text-[13px] text-muted">health factor, {CATEGORY_LABEL[now.category].toLowerCase()}</div>
           </div>
@@ -56,28 +56,28 @@ export function ReportView({ owner }: { owner: string }) {
         </section>
         <h2 className="mt-7 text-[20px] font-semibold">Price scenarios (hypothetical)</h2>
         <table className="mt-2 w-full text-left text-[14px]">
-          <thead><tr className="text-muted"><th className="py-1 font-normal">BTC move</th><th className="py-1 font-normal">BTC price</th><th className="py-1 font-normal">ICR</th><th className="py-1 font-normal">Health factor</th><th className="py-1 font-normal">Status</th></tr></thead>
+          <thead><tr className="text-muted"><th className="py-1 pr-3 font-normal">BTC move</th><th className="py-1 pr-3 font-normal">BTC price</th><th className="py-1 pr-3 font-normal">ICR</th><th className="py-1 pr-3 font-normal">Health factor</th><th className="py-1 pr-3 font-normal">Status</th></tr></thead>
           <tbody>
             {scen.map(({ b, r }) => (
               <tr key={b} className="border-t border-line">
-                <td className="num py-1.5">{b === 0 ? "now" : `${b / 100}%`}</td>
-                <td className="num py-1.5">{formatUsd(applyBpsChange(price, b), 0)}</td>
-                <td className="num py-1.5">{formatRatioPct(r.icr)}</td>
-                <td className="num py-1.5">{formatHF(r.hf)}</td>
-                <td className="py-1.5">{CATEGORY_LABEL[r.category]}</td>
+                <td className="num py-1.5 pr-3">{b === 0 ? "now" : `${b / 100}%`}</td>
+                <td className="num py-1.5 pr-3">{formatUsd(applyBpsChange(price, b), 0)}</td>
+                <td className="num py-1.5 pr-3">{formatRatioPct(r.icr)}</td>
+                <td className="num py-1.5 pr-3">{formatHF(r.hf)}</td>
+                <td className="py-1.5 pr-3">{CATEGORY_LABEL[r.category]}</td>
               </tr>
             ))}
           </tbody>
         </table>
         <h2 className="mt-7 text-[20px] font-semibold">What it would take</h2>
         <table className="mt-2 w-full text-left text-[14px]">
-          <thead><tr className="text-muted"><th className="py-1 font-normal">Target HF</th><th className="py-1 font-normal">Repay MUSD</th><th className="py-1 font-normal">or add BTC</th></tr></thead>
+          <thead><tr className="text-muted"><th className="py-1 pr-3 font-normal">Target HF</th><th className="py-1 pr-3 font-normal">Repay MUSD</th><th className="py-1 pr-3 font-normal">or add BTC</th></tr></thead>
           <tbody>
             {targets.map((t) => (
               <tr key={t.hf} className="border-t border-line">
-                <td className="num py-1.5">{t.hf.toFixed(2)}</td>
-                <td className="num py-1.5">{t.repay.alreadyMet ? "met" : t.repay.feasible ? formatAmount(t.repay.required) : `> ${formatAmount(t.repay.capped)} cap (minNetDebt)`}</td>
-                <td className="num py-1.5">{t.coll.alreadyMet ? "met" : formatBtc(t.coll.required)}</td>
+                <td className="num py-1.5 pr-3">{t.hf.toFixed(2)}</td>
+                <td className="num py-1.5 pr-3">{t.repay.alreadyMet ? "met" : t.repay.feasible ? formatAmount(t.repay.required) : `> ${formatAmount(t.repay.capped)} cap (minNetDebt)`}</td>
+                <td className="num py-1.5 pr-3">{t.coll.alreadyMet ? "met" : formatBtc(t.coll.required)}</td>
               </tr>
             ))}
           </tbody>

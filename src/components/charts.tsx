@@ -103,7 +103,7 @@ export function HealthHistoryChart({ data, range, mcr }: { data: HistoryResponse
             <YAxis domain={[0.8, Math.ceil(max * 10) / 10]} stroke={AXIS} fontSize={12} tickLine={false} axisLine={false} width={40} tickFormatter={(v) => Number(v).toFixed(1)} />
             <HatchPattern id="hatch-hf" />
             <ReferenceArea y1={0.8} y2={1} fill="url(#hatch-hf)" fillOpacity={1} stroke="none" ifOverflow="hidden" />
-            <ReferenceLine y={1} stroke="#000000" strokeWidth={1.5} label={{ value: "Liquidation (HF 1.00)", position: "insideTopRight", fill: "#000000", fontSize: 12 }} />
+            <ReferenceLine y={1} stroke="#000000" strokeWidth={1.5} label={{ value: "Liquidation (HF 1.00)", position: "insideBottomRight", fill: "#000000", fontSize: 12 }} />
             <Tooltip
               cursor={{ stroke: AXIS, strokeDasharray: "3 3" }}
               content={({ active, payload, label }) =>

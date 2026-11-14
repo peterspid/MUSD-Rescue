@@ -44,7 +44,7 @@ export default function SettingsPage() {
             <dt className="text-muted">Explorer</dt>
             <dd><a className="text-blue underline-offset-4 hover:underline" href={NETWORKS.testnet.explorer} target="_blank" rel="noreferrer">{NETWORKS.testnet.explorer}</a></dd>
             <dt className="text-muted">Your wallet</dt>
-            <dd className={cn(support.kind === "supported" ? "text-blue" : "font-semibold text-ink")}>{address ? `${shortAddress(address)} on ${support.label}` : "Not connected"}</dd>
+            <dd className={cn(!address ? "text-muted" : support.kind === "supported" ? "text-blue" : "font-semibold text-ink")}>{address ? `${shortAddress(address)} on ${support.label}` : "Not connected"}</dd>
             <dt className="text-muted">Mezo Mainnet</dt>
             <dd className="text-ink-soft">Read-only: contract addresses are listed below; MUSD Rescue never prepares mainnet transactions.</dd>
           </dl>

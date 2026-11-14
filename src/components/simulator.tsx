@@ -117,7 +117,7 @@ export function Simulator(props: SimulatorProps) {
           </h2>
           <SourceTag kind={fictional ? "fictional" : "simulated"} />
         </div>
-        <p className="mt-1 text-[14px] text-ink-soft">Hypothetical BTC moves, not predictions. {fictional ? "Base price is fictional." : "Starts from the live on-chain oracle price."}</p>
+        <p className="mt-1 text-[14px] text-ink-soft">Hypothetical BTC moves, not predictions. {fictional ? "The base price is example data." : "Starts from the live on-chain oracle price."}</p>
         <div className="mt-4 flex flex-wrap gap-1.5" role="group" aria-label="Price change presets">
           {PRESETS.map((b) => (
             <button
@@ -290,52 +290,54 @@ export function Simulator(props: SimulatorProps) {
             </p>
           </div>
           {targetICR && rSol && cSol && (
-            <div className="mt-4 overflow-x-auto">
-              <table className="w-full min-w-[520px] text-left text-[14px]">
-                <caption className="sr-only">Ways to reach the target health factor</caption>
-                <thead>
-                  <tr className="text-[13px] text-muted">
-                    <th className="pb-2 font-normal">Option</th>
-                    <th className="pb-2 font-normal">Amount</th>
-                    <th className="pb-2 font-normal">Cost (USD)</th>
-                    <th className="pb-2 font-normal">HF after</th>
-                    <th className="pb-2 font-normal" />
-                  </tr>
-                </thead>
-                <tbody>
-                  {options.map((o) => (
-                    <tr key={o.id} className="border-t border-line align-top">
-                      <td className="py-2.5 pr-3">
-                        <div className="font-medium text-ink">{o.label}</div>
-                        <div className="max-w-[34ch] text-[13px] text-muted">{o.tradeoff}</div>
-                      </td>
-                      <td className="num py-2.5 pr-3">
-                        {o.repay > 0n && <div>{formatAmount(o.repay)} MUSD</div>}
-                        {o.addColl > 0n && <div>{formatBtc(o.addColl)} BTC</div>}
-                        {o.repay === 0n && o.addColl === 0n && <div className="text-muted">nothing</div>}
-                      </td>
-                      <td className="num py-2.5 pr-3">{formatUsd(o.usdCommitted)}</td>
-                      <td className="num py-2.5 pr-3">
-                        <span className={cn(!o.feasible && "font-semibold text-ink")}>{formatHF(o.hfAfter)}</span>
-                        {!o.feasible && <div className="max-w-[24ch] text-[13px] text-ink">{o.note}</div>}
-                      </td>
-                      <td className="py-2.5">
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => {
-                            setTab(o.id === "repay" ? "repay" : o.id === "collateral" ? "collateral" : "combined");
-                            setRepayStr(o.repay > 0n ? toInputString(o.repay, 18, 6) : "");
-                            setCollStr(o.addColl > 0n ? toInputString(o.addColl, 18, 8) : "");
-                          }}
-                        >
-                          <Crosshair className="size-3.5" /> Use
-                        </Button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="mt-4">
+              <h3 className="sr-only">Ways to reach the target health factor</h3>
+              <div className="hidden grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)_minmax(0,0.8fr)_minmax(0,0.9fr)_auto] gap-x-3 pb-2 text-[13px] text-muted sm:grid" aria-hidden>
+                <span>Option</span>
+                <span>Amount</span>
+                <span>Cost (USD)</span>
+                <span>HF after</span>
+                <span className="w-[68px]" />
+              </div>
+              <ul className="text-[14px]">
+                {options.map((o) => (
+                  <li key={o.id} className="grid grid-cols-3 gap-x-3 gap-y-2 border-t border-line py-3 sm:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)_minmax(0,0.8fr)_minmax(0,0.9fr)_auto] sm:items-start">
+                    <div className="col-span-3 sm:col-span-1">
+                      <div className="font-medium text-ink">{o.label}</div>
+                      <div className="max-w-[40ch] text-[13px] text-muted">{o.tradeoff}</div>
+                    </div>
+                    <div className="num min-w-0">
+                      <div className="text-[13px] text-muted sm:hidden">Amount</div>
+                      {o.repay > 0n && <div>{formatAmount(o.repay)} MUSD</div>}
+                      {o.addColl > 0n && <div>{formatBtc(o.addColl)} BTC</div>}
+                      {o.repay === 0n && o.addColl === 0n && <div className="text-muted">nothing</div>}
+                    </div>
+                    <div className="num min-w-0">
+                      <div className="text-[13px] text-muted sm:hidden">Cost (USD)</div>
+                      {formatUsd(o.usdCommitted)}
+                    </div>
+                    <div className="num min-w-0">
+                      <div className="text-[13px] text-muted sm:hidden">HF after</div>
+                      <span className={cn(!o.feasible && "font-semibold text-ink")}>{formatHF(o.hfAfter)}</span>
+                    </div>
+                    {!o.feasible && <div className="col-span-3 text-[13px] text-ink sm:col-span-3 sm:col-start-2 sm:row-start-2">{o.note}</div>}
+                    <div className="col-span-3 sm:col-span-1 sm:row-start-1 sm:col-start-5">
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => {
+                          setTab(o.id === "repay" ? "repay" : o.id === "collateral" ? "collateral" : "combined");
+                          setRepayStr(o.repay > 0n ? toInputString(o.repay, 18, 6) : "");
+                          setCollStr(o.addColl > 0n ? toInputString(o.addColl, 18, 8) : "");
+                        }}
+                        aria-label={`Use ${o.label}`}
+                      >
+                        <Crosshair className="size-3.5" aria-hidden /> Use
+                      </Button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
               <p className="mt-2 flex gap-1.5 text-[13px] text-muted">
                 <Info className="mt-0.5 size-3.5 shrink-0" />
                 No option is picked for you. Prices, accrued interest, oracle updates and transaction timing can change the result; amounts are rounded up to reach the target.
