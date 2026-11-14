@@ -7,7 +7,7 @@ import * as Dialog from "@radix-ui/react-dialog";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAccount } from "wagmi";
 import { isAddress } from "viem";
-import { Activity, Bell, BellRing, FlaskConical, LayoutDashboard, LifeBuoy, Radar, Search, Settings, FileText, RefreshCw } from "lucide-react";
+import { Activity, Bell, BellRing, FlaskConical, LayoutDashboard, LifeBuoy, Radar, Search, Settings, FileText, RefreshCw, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { ConnectButton, NetworkNotice } from "./wallet";
 import { FreshnessPill, cn } from "./ui";
@@ -19,10 +19,11 @@ import { formatBps, formatRatioPct, formatUsd } from "@/lib/risk/format";
 
 const NAV = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/guard", label: "Guard", icon: ShieldCheck },
   { href: "/radar", label: "Radar", icon: Radar },
   { href: "/alerts", label: "Alerts", icon: Bell },
   { href: "/activity", label: "Activity", icon: Activity },
-  { href: "/demo", label: "Demo", icon: FlaskConical },
+  { href: "/demo", label: "Demo", icon: FlaskConical, desktopOnly: true },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 
@@ -322,7 +323,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         {children}
       </main>
       <nav className="no-print fixed inset-x-0 bottom-0 z-30 grid grid-cols-6 border-t border-line bg-paper lg:hidden" aria-label="Main mobile">
-        {NAV.map((n) => (
+        {NAV.filter((n) => !("desktopOnly" in n)).map((n) => (
           <Link key={n.href} href={n.href} aria-current={active === n.href ? "page" : undefined} className={cn("flex min-w-0 flex-col items-center gap-0.5 border-t-2 py-2 text-[12px]", active === n.href ? "border-blue font-medium text-blue" : "border-transparent text-ink-soft")}>
             <n.icon className="size-5" aria-hidden />
             {n.label}
